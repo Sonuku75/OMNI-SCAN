@@ -149,7 +149,7 @@ export default function AnalyzePage() {
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept=".jpg,.jpeg,.png,.webp,.wav,.mp3,.m4a,.mp4,.mov"
+          accept=".jpg,.jpeg,.png,.webp,.wav,.mp3,.m4a,.mp4,.mov,.webm,.mkv,.avi"
           onChange={onFileInputChange}
         />
 
@@ -181,10 +181,10 @@ export default function AnalyzePage() {
                 Images: JPG, PNG, WEBP (Max 25MB)
               </span>
               <span className="px-2 py-1 rounded bg-omni-bg border border-omni-border">
-                Audio: WAV, MP3, M4A (Max 50MB)
+                Audio: WAV, MP3, M4A (Max 50MB, 3min)
               </span>
               <span className="px-2 py-1 rounded bg-omni-bg border border-omni-border">
-                Video: MP4, MOV (Max 150MB)
+                Video: MP4, MOV, WEBM, MKV, AVI (Max 150MB, 60s)
               </span>
             </div>
           </div>

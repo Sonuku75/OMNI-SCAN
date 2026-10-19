@@ -52,8 +52,17 @@ class Settings(BaseSettings):
     AUDIO_MODEL_NAME: str = "aasist_spoof_detector_v1"
     AUDIO_MODEL_DEVICE: str = "cpu"
 
-    VIDEO_MAX_DURATION_SECONDS: int = 60
-    VIDEO_MAX_FRAMES_SAMPLED: int = 100
+    # Video Forensic & Temporal Model Limits
+    VIDEO_DETECTOR_ENABLED: bool = True
+    VIDEO_MAX_DURATION_SECONDS: int = 60  # 60s max video length
+    VIDEO_MIN_DURATION_SECONDS: float = 0.2
+    VIDEO_MAX_FRAMES_SAMPLED: int = 100   # maximum sampled frames per analysis
+    VIDEO_MAX_RESOLUTION_WIDTH: int = 1920
+    VIDEO_MAX_RESOLUTION_HEIGHT: int = 1080
+    VIDEO_FRAME_SAMPLE_FPS: float = 1.0   # 1 frame per second baseline
+    VIDEO_MODEL_PATH: Optional[str] = None
+    VIDEO_MODEL_NAME: str = "vivit_deepfake_detector_v1"
+    VIDEO_MODEL_DEVICE: str = "cpu"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -140,7 +140,72 @@ const SIGNAL_DEFINITIONS: Record<string, { label: string; hint: string }> = {
   },
   duration_seconds: {
     label: "Duration",
-    hint: "Exact decoded audio stream duration in seconds",
+    hint: "Exact decoded media stream duration in seconds",
+  },
+  // Video Forensics & Temporal Signals
+  sampled_frame_count: {
+    label: "Sampled Keyframes",
+    hint: "Total number of video frames extracted for forensic analysis",
+  },
+  anomalous_frame_count: {
+    label: "Anomalous Frames",
+    hint: "Number of sampled frames exhibiting frequency or compression anomalies",
+  },
+  mean_fft_high_freq_ratio: {
+    label: "Avg 2D FFT High-Freq Energy",
+    hint: "Mean ratio of high-frequency power across all sampled video frames",
+  },
+  mean_ela_block_variance: {
+    label: "Avg ELA Block Variance",
+    hint: "Mean recompression residual variance across sampled frames",
+  },
+  grid_spikes_detected: {
+    label: "Periodic Checkerboard Grid",
+    hint: "Detects frequency domain checkerboard spikes from generative upsampling in video frames",
+  },
+  mean_frame_difference: {
+    label: "Mean Frame Difference",
+    hint: "Normalized mean absolute difference across adjacent sampled frames",
+  },
+  max_frame_difference: {
+    label: "Max Frame Discontinuity",
+    hint: "Peak inter-frame transition delta across all sampled pairs",
+  },
+  mean_histogram_correlation: {
+    label: "Color Histogram Continuity",
+    hint: "HSV color distribution correlation between consecutive frames (values <0.4 indicate cuts)",
+  },
+  scene_cut_count: {
+    label: "Scene Cuts Detected",
+    hint: "Number of detected camera transitions/cuts filtered from temporal jitter calculations",
+  },
+  mean_optical_flow_magnitude: {
+    label: "Optical Flow Motion",
+    hint: "Average pixel motion vector displacement magnitude across frames",
+  },
+  optical_flow_variance: {
+    label: "Motion Vector Variance",
+    hint: "Evaluates motion vector turbulence (values >6.0 under low motion indicate warping artifacts)",
+  },
+  temporal_sharpness_jitter: {
+    label: "Temporal Sharpness Jitter",
+    hint: "Frame-to-frame sharpness variance within continuous scenes (values >0.55 indicate GAN flicker)",
+  },
+  temporal_anomaly_detected: {
+    label: "Temporal Anomaly Flag",
+    hint: "Indicates whether inter-frame motion or sharpness exhibited statistical instability",
+  },
+  fps: {
+    label: "Frame Rate (FPS)",
+    hint: "Recorded video stream frames per second",
+  },
+  total_frames: {
+    label: "Total Stream Frames",
+    hint: "Total frame count in video stream container",
+  },
+  fourcc: {
+    label: "FourCC Codec",
+    hint: "Container four-character video compression codec identifier",
   },
 };
 
@@ -331,9 +396,21 @@ export default function AnalysisDetailPage({
             </div>
           ) : null}
 
+          {detail.upload.width != null && detail.upload.height != null ? (
+            <div className="p-3 rounded-lg bg-omni-bg border border-omni-border/60">
+              <span className="text-omni-muted block text-[10px] uppercase">Resolution</span>
+              <span className="text-omni-text font-semibold">
+                {detail.upload.width} × {detail.upload.height}
+              </span>
+            </div>
+          ) : null}
+
           <div
             className={`p-3 rounded-lg bg-omni-bg border border-omni-border/60 ${
-              detail.upload.duration_ms != null && detail.upload.duration_ms > 0 ? "sm:col-span-1" : "sm:col-span-2"
+              (detail.upload.duration_ms != null && detail.upload.duration_ms > 0) ||
+              (detail.upload.width != null && detail.upload.height != null)
+                ? "sm:col-span-1"
+                : "sm:col-span-2"
             }`}
           >
             <span className="text-omni-muted block text-[10px] uppercase">SHA-256 Fingerprint</span>
@@ -426,7 +503,15 @@ export default function AnalysisDetailPage({
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs">
                     {Object.entries(det.signals)
-                      .filter(([key]) => key !== "anomaly_indicators")
+                      .filter(
+                        ([key]) =>
+                          ![
+                            "anomaly_indicators",
+                            "frame_breakdown",
+                            "scene_cut_timestamps",
+                            "anomalous_frame_indices",
+                          ].includes(key)
+                      )
                       .map(([key, val]) => {
                         const meta = SIGNAL_DEFINITIONS[key] || {
                           label: key.replace(/_/g, " "),
@@ -462,11 +547,69 @@ export default function AnalysisDetailPage({
                         );
                       })}
                   </div>
+
+                  {/* Sampled Video Keyframes Breakdown Table */}
+                  {Array.isArray(det.signals.frame_breakdown) && det.signals.frame_breakdown.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h5 className="text-[11px] font-semibold text-omni-muted uppercase tracking-wider font-mono">
+                          Sampled Video Keyframes Breakdown ({(det.signals.frame_breakdown as any[]).length} Frames)
+                        </h5>
+                        <span className="text-[10px] text-omni-muted font-mono">
+                          Uniform Temporal Sampling
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto rounded-lg border border-omni-border/70">
+                        <table className="w-full text-xs font-mono text-left">
+                          <thead className="bg-omni-bg text-[10px] text-omni-muted uppercase border-b border-omni-border/70">
+                            <tr>
+                              <th className="p-2.5">Frame #</th>
+                              <th className="p-2.5">Timestamp</th>
+                              <th className="p-2.5">FFT Energy</th>
+                              <th className="p-2.5">ELA Variance</th>
+                              <th className="p-2.5">Laplacian Focus</th>
+                              <th className="p-2.5">Grid Spikes</th>
+                              <th className="p-2.5 text-right">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-omni-border/50 bg-omni-surface/60">
+                            {(det.signals.frame_breakdown as any[]).map((f: any, fIdx: number) => (
+                              <tr key={fIdx} className={f.anomalous ? "bg-amber-950/20" : ""}>
+                                <td className="p-2.5 text-omni-text font-semibold">{f.frame_index}</td>
+                                <td className="p-2.5 text-omni-muted">{f.timestamp_seconds?.toFixed(2)}s</td>
+                                <td className="p-2.5 text-omni-text">{f.fft_high_freq_ratio?.toFixed(3) ?? "-"}</td>
+                                <td className="p-2.5 text-omni-text">{f.ela_block_variance?.toFixed(2) ?? "-"}</td>
+                                <td className="p-2.5 text-omni-text">{f.laplacian_focus_variance?.toFixed(1) ?? "-"}</td>
+                                <td className="p-2.5">
+                                  {f.grid_spikes_detected ? (
+                                    <span className="text-amber-400 font-bold">Detected</span>
+                                  ) : (
+                                    <span className="text-emerald-400">Normal</span>
+                                  )}
+                                </td>
+                                <td className="p-2.5 text-right">
+                                  {f.anomalous ? (
+                                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-amber-900/50 text-amber-300 border border-amber-700/60 font-semibold">
+                                      Anomalous
+                                    </span>
+                                  ) : (
+                                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-emerald-950/40 text-emerald-400 border border-emerald-800/40">
+                                      Clean
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-xs text-omni-muted font-mono bg-omni-bg p-3 rounded-lg border border-omni-border">
                   {det.status === "not_configured"
-                    ? "Model weights are not configured. To enable deep learning inference, set IMAGE_MODEL_PATH in the environment."
+                    ? "Model weights are not configured for this detector. Set the corresponding model path environment variable to enable deep learning inference."
                     : `No signals extracted (detector status: ${det.status}).`}
                 </div>
               )}

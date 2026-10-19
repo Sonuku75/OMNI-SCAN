@@ -9,6 +9,7 @@ from app.core.logging import logger
 from app.core.state_machine import AnalysisStateMachine
 from app.detectors.audio.service import AudioAnalysisService
 from app.detectors.image.service import ImageAnalysisService
+from app.detectors.video.service import VideoAnalysisService
 from app.detectors.registry import detector_registry
 from app.models.analysis import Analysis
 from app.models.detector_result import DetectorResult
@@ -26,6 +27,7 @@ class AnalysisOrchestrator:
     def __init__(self):
         self.image_service = ImageAnalysisService()
         self.audio_service = AudioAnalysisService()
+        self.video_service = VideoAnalysisService()
 
     async def run_pipeline(self, analysis_id: str) -> None:
         """
@@ -215,9 +217,81 @@ class AnalysisOrchestrator:
                         f"Orchestrator: Analysis {analysis_id} finished as {analysis.status} (label: {analysis.assessment_label})"
                     )
 
+                elif media_type == "video":
+                    logger.info(f"Orchestrator: executing Video Forensics pipeline for upload {upload.id}")
+                    storage = get_storage_adapter()
+                    video_bytes = await storage.get_file(upload.object_key)
+
+                    analysis_output = await self.video_service.analyze_video_bytes(
+                        video_bytes=video_bytes,
+                        original_filename=upload.original_filename,
+                        sha256=upload.sha256,
+                    )
+
+                    forensics_output = analysis_output["detector_results"][0]
+
+                    if forensics_output.status == DetectorStatus.FAILED:
+                        AnalysisStateMachine.validate_transition(
+                            AnalysisStatus.PROCESSING, AnalysisStatus.FAILED
+                        )
+                        analysis.status = AnalysisStatus.FAILED.value
+                        analysis.completed_at = now
+                        analysis.summary = (
+                            f"Video analysis failed: {forensics_output.error or 'Invalid video stream'}."
+                        )
+                    else:
+                        AnalysisStateMachine.validate_transition(
+                            AnalysisStatus.PROCESSING, AnalysisStatus.COMPLETED
+                        )
+                        analysis.status = AnalysisStatus.COMPLETED.value
+                        analysis.completed_at = now
+                        analysis.assessment_label = analysis_output["assessment_label"]
+                        analysis.assessment_score = analysis_output["assessment_score"]
+                        analysis.score_semantics = analysis_output["score_semantics"]
+                        analysis.summary = analysis_output["summary"]
+
+                        if analysis_output.get("duration_ms"):
+                            upload.duration_ms = analysis_output["duration_ms"]
+                        if analysis_output.get("width"):
+                            upload.width = analysis_output["width"]
+                        if analysis_output.get("height"):
+                            upload.height = analysis_output["height"]
+
+                    analysis.detector_results.clear()
+                    for det_out in analysis_output["detector_results"]:
+                        det_res = DetectorResult(
+                            id=str(uuid.uuid4()),
+                            analysis_id=analysis.id,
+                            detector_name=det_out.detector_name,
+                            detector_version=det_out.detector_version,
+                            status=det_out.status.value,
+                            score=det_out.score,
+                            score_semantics=det_out.score_semantics,
+                            signals_json=det_out.signals,
+                            limitations_json=det_out.limitations,
+                            created_at=now,
+                        )
+                        session.add(det_res)
+
+                    analysis.provenance_checks.clear()
+                    prov_data = analysis_output["provenance"]
+                    prov = ProvenanceCheck(
+                        id=str(uuid.uuid4()),
+                        analysis_id=analysis.id,
+                        status=prov_data["status"],
+                        metadata_json=prov_data["metadata"],
+                        content_credentials_status=prov_data["content_credentials_status"],
+                        created_at=now,
+                    )
+                    session.add(prov)
+
+                    await session.commit()
+                    logger.info(
+                        f"Orchestrator: Analysis {analysis_id} finished as {analysis.status} (label: {analysis.assessment_label})"
+                    )
+
                 else:
-                    # Video: Scheduled for Milestone 6
-                    # Honest state: DETECTOR_NOT_CONFIGURED
+                    # Unknown / unsupported media type: DETECTOR_NOT_CONFIGURED
                     AnalysisStateMachine.validate_transition(
                         AnalysisStatus.PROCESSING, AnalysisStatus.DETECTOR_NOT_CONFIGURED
                     )
@@ -228,7 +302,7 @@ class AnalysisOrchestrator:
                     analysis.score_semantics = "not_applicable"
                     analysis.summary = (
                         f"Analysis orchestration pipeline completed. The forensic detector adapter for '{media_type}' "
-                        f"assets is not yet configured (Milestone 6 planned). No artificial scores or mock predictions generated."
+                        f"assets is not configured. No artificial scores or mock predictions generated."
                     )
 
                     analysis.detector_results.clear()
@@ -242,7 +316,7 @@ class AnalysisOrchestrator:
                         score_semantics="not_applicable",
                         signals_json={},
                         limitations_json=[
-                            f"Model weights and extraction pipeline for {media_type} scheduled for Milestone 6."
+                            f"Forensic detector adapter for media type '{media_type}' is unconfigured."
                         ],
                         created_at=now,
                     )

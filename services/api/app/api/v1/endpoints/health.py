@@ -33,6 +33,13 @@ async def get_v1_health() -> HealthResponse:
         else DetectorStatus.NOT_CONFIGURED
     )
 
+    vid_det = detector_registry.get("video_forensics_v1")
+    video_status = (
+        DetectorStatus.AVAILABLE
+        if (vid_det and vid_det.is_configured())
+        else DetectorStatus.NOT_CONFIGURED
+    )
+
     return HealthResponse(
         status="healthy" if (db_connected and storage_ok) else "degraded",
         version=settings.VERSION,
@@ -43,7 +50,7 @@ async def get_v1_health() -> HealthResponse:
             detectors=DetectorHealth(
                 image=image_status,
                 audio=audio_status,
-                video=DetectorStatus.NOT_CONFIGURED,
+                video=video_status,
                 provenance=DetectorStatus.NOT_CONFIGURED,
             ),
         ),

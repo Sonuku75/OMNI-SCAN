@@ -37,11 +37,9 @@ def test_analysis_orchestration_and_polling(client):
     assert detail_res.status_code == 200
     detail = detail_res.json()
 
-    # Honest terminal state in Milestone 5 for unconfigured video adapter
-    assert detail["status"] == "detector_not_configured"
-    assert detail["assessment_score"] is None
-    assert detail["score_semantics"] == "not_applicable"
-    assert "detector adapter" in detail["summary"].lower()
+    # For a truncated or header-only video asset, analysis completes with FAILED state and honest failure reason
+    assert detail["status"] == "failed"
+    assert "video analysis failed" in detail["summary"].lower() or "container" in detail["summary"].lower()
     assert detail["started_at"] is not None
     assert detail["completed_at"] is not None
 
@@ -69,8 +67,8 @@ def test_duplicate_analysis_prevention(client):
 
 def test_retry_analysis_endpoint(client):
     """
-    Test safe retries for unconfigured or failed analyses:
-    1. Create analysis on unconfigured video -> finishes as detector_not_configured.
+    Test safe retries for failed analyses:
+    1. Create analysis on truncated video -> finishes as failed.
     2. Trigger POST /api/v1/analyses/{id}/retry.
     3. Status transitions back to QUEUED, then executes.
     """
@@ -84,9 +82,9 @@ def test_retry_analysis_endpoint(client):
     create_res = client.post("/api/v1/analyses", json={"upload_id": upload_id})
     analysis_id = create_res.json()["analysis_id"]
 
-    # Verify initial terminal state is detector_not_configured for video
+    # Verify initial terminal state is failed for truncated video
     detail_res = client.get(f"/api/v1/analyses/{analysis_id}")
-    assert detail_res.json()["status"] == "detector_not_configured"
+    assert detail_res.json()["status"] == "failed"
 
     # Trigger safe retry
     retry_res = client.post(f"/api/v1/analyses/{analysis_id}/retry")

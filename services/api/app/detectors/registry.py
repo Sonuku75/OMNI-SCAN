@@ -46,3 +46,10 @@ from app.detectors.audio.model_adapter import PretrainedAudioModelAdapter
 
 detector_registry.register(AudioForensicsDetector())
 detector_registry.register(PretrainedAudioModelAdapter())
+
+# Register core video forensic detectors (Milestone 6)
+from app.detectors.video.detector import VideoForensicsDetector
+from app.detectors.video.model_adapter import PretrainedVideoModelAdapter
+
+detector_registry.register(VideoForensicsDetector())
+detector_registry.register(PretrainedVideoModelAdapter())
