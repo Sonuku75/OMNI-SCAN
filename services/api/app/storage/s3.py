@@ -54,13 +54,27 @@ class S3StorageAdapter(StorageAdapter):
             )
 
         def _upload():
-            self._client.put_object(
-                Bucket=self.bucket_name,
-                Key=object_key,
-                Body=data,
-                ContentType=content_type,
-                ServerSideEncryption="AES256" if not self.endpoint_url else None,
-            )
+            # Ensure private bucket exists (essential for local MinIO initialization)
+            try:
+                self._client.head_bucket(Bucket=self.bucket_name)
+            except ClientError as be:
+                error_code = be.response.get("Error", {}).get("Code", "")
+                if error_code in ("404", "NoSuchBucket"):
+                    try:
+                        self._client.create_bucket(Bucket=self.bucket_name)
+                    except Exception:
+                        pass
+
+            kwargs = {
+                "Bucket": self.bucket_name,
+                "Key": object_key,
+                "Body": data,
+                "ContentType": content_type,
+            }
+            if not self.endpoint_url:
+                kwargs["ServerSideEncryption"] = "AES256"
+
+            self._client.put_object(**kwargs)
 
         try:
             await asyncio.to_thread(_upload)

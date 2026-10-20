@@ -178,15 +178,107 @@ Returns a structured, print-ready forensic analysis document including disclaime
 **Response `200 OK`**:
 ```json
 {
-  "report_id": "rep_9a8b7c",
+  "report_id": "REP-1C7E9A8B",
   "analysis_id": "1c7e9a8b-4a5c-4e32-9c12-3f8d2b9e1a4f",
   "generated_at": "2026-10-20T01:00:20Z",
+  "media_metadata": {
+    "filename": "sample.png",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "media_type": "image",
+    "size_bytes": 1048576
+  },
   "summary_statement": "The media contains statistical artifacts consistent with synthetic generation.",
   "evidence_points": [
     "Azimuthal average in 2D FFT shows pronounced high-frequency periodic spikes.",
     "No C2PA provenance manifest present in file metadata."
   ],
+  "provenance_summary": "No cryptographic C2PA Content Credentials found in media container.",
+  "provenance_status": "no_credentials_found",
   "human_review_recommended": true,
   "disclaimer": "Detection results are probabilistic and do not constitute absolute forensic proof."
+}
+```
+
+### `GET /api/v1/analyses/{analysis_id}/report/html`
+Returns a standalone, self-contained printable HTML forensic dossier with embedded styling and `@media print` support for direct print-to-PDF export.
+
+**Response `200 OK`**:
+- Content-Type: `text/html; charset=utf-8`
+
+### `GET /api/v1/analyses/{analysis_id}/report/export`
+Downloads the report as a standalone attachment.
+
+**Query Parameters**:
+- `format`: `json` | `html` (default: `json`)
+
+**Response `200 OK`**:
+- Headers: `Content-Disposition: attachment; filename="omniscan-report-{analysis_id}.json"` (or `.html`)
+
+---
+
+## 5. Authentication
+
+### `POST /api/v1/auth/register`
+Creates a new analyst workspace account.
+
+**Request Body**:
+```json
+{
+  "email": "analyst@omniscan.example.com",
+  "password": "SecurePassword123!",
+  "full_name": "Senior Forensic Analyst",
+  "organization": "Cyber Crime Division"
+}
+```
+
+**Response `201 Created`**:
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "user": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "email": "analyst@omniscan.example.com",
+    "is_active": true,
+    "created_at": "2026-10-20T01:00:00Z"
+  }
+}
+```
+
+### `POST /api/v1/auth/login`
+Authenticates existing analyst credentials and issues an HMAC-SHA256 JWT access token.
+
+**Request Body**:
+```json
+{
+  "email": "analyst@omniscan.example.com",
+  "password": "SecurePassword123!"
+}
+```
+
+**Response `200 OK`**:
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "user": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "email": "analyst@omniscan.example.com",
+    "is_active": true,
+    "created_at": "2026-10-20T01:00:00Z"
+  }
+}
+```
+
+### `GET /api/v1/auth/me`
+Retrieves currently authenticated analyst profile from token in `Authorization: Bearer <token>` header.
+
+**Response `200 OK`**:
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "email": "analyst@omniscan.example.com",
+  "is_active": true,
+  "created_at": "2026-10-20T01:00:00Z"
 }
 ```

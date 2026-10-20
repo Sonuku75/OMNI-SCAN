@@ -9,12 +9,12 @@ def test_root_health_endpoint(client):
     assert "services" in data
     assert data["services"]["database"] == "connected"
     assert data["services"]["storage"] == "local"
-    # In Milestone 6, image, audio, and video detectors are available while provenance remains not_configured
+    # Image, audio, video, and provenance detectors are available
     detectors = data["services"]["detectors"]
     assert detectors["image"] == "available"
     assert detectors["audio"] == "available"
     assert detectors["video"] == "available"
-    assert detectors["provenance"] == "not_configured"
+    assert detectors["provenance"] == "available"
 
 
 def test_v1_health_endpoint(client):

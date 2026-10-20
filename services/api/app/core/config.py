@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     ]
 
     SECRET_KEY: str = "dev-insecure-secret-key-32chars-min-change-in-prod"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    # Rate Limiting & Abuse Prevention Controls
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 120
+    AUTH_RATE_LIMIT_PER_MINUTE: int = 30
 
     # Database configuration (PostgreSQL production / aiosqlite for isolated test & dev)
     DATABASE_URL: str = "sqlite+aiosqlite:///./omniscan.db"

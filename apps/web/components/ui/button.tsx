@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  variant?: "primary" | "parchment" | "secondary" | "outline" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
 }
@@ -21,22 +21,22 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium transition-all duration-150 rounded-lg focus:outline-none focus:ring-2 focus:ring-omni-primary/50 disabled:opacity-50 disabled:cursor-not-allowed select-none";
+      "inline-flex items-center justify-center font-semibold select-none rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B58A4C]/60 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
 
     const variants = {
-      primary:
-        "bg-omni-primary text-omni-bg font-semibold hover:bg-omni-primaryHover active:scale-[0.98] shadow-sm shadow-omni-primary/20",
-      secondary:
-        "bg-omni-surfaceHover text-omni-text border border-omni-border hover:bg-omni-border hover:text-white",
+      primary: "skeuo-button-forest",
+      parchment: "skeuo-button-parchment",
+      secondary: "skeuo-button-wood",
       outline:
-        "border border-omni-border text-omni-text hover:bg-omni-surface hover:border-omni-borderHover",
-      ghost: "text-omni-muted hover:text-omni-text hover:bg-omni-surfaceHover",
+        "bg-[#3B281A] text-[#F0DDB8] border border-[#B58A4C] shadow-[0_2px_4px_rgba(24,15,10,0.4),inset_0_1px_0_rgba(229,201,149,0.2)] hover:bg-[#4A3321] hover:border-[#E5C995] active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(24,15,10,0.7)]",
+      ghost:
+        "text-[#664830] hover:text-[#24170F] hover:bg-[#B58A4C]/15 active:translate-y-[0.5px]",
       danger:
-        "bg-omni-danger/10 text-omni-danger border border-omni-danger/30 hover:bg-omni-danger/20",
+        "bg-gradient-to-b from-[#C43E32] to-[#A9362B] text-[#FFF5F5] border border-[#7A241B] shadow-[0_3px_6px_rgba(24,15,10,0.45),inset_0_1px_0_rgba(255,180,180,0.35)] hover:brightness-110 active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(24,15,10,0.8)]",
     };
 
     const sizes = {
-      sm: "px-2.5 py-1.5 text-xs gap-1.5",
+      sm: "px-3 py-1.5 text-xs gap-1.5",
       md: "px-4 py-2 text-sm gap-2",
       lg: "px-5 py-2.5 text-base gap-2.5",
     };

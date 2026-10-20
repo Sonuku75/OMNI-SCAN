@@ -51,7 +51,7 @@ async def get_v1_health() -> HealthResponse:
                 image=image_status,
                 audio=audio_status,
                 video=video_status,
-                provenance=DetectorStatus.NOT_CONFIGURED,
+                provenance=DetectorStatus.AVAILABLE,
             ),
         ),
     )

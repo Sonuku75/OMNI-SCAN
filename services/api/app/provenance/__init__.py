@@ -1,1 +1,3 @@
-# Provenance package (C2PA and metadata inspection)
+from .service import ProvenanceOutcome, ProvenanceVerifier
+
+__all__ = ["ProvenanceOutcome", "ProvenanceVerifier"]

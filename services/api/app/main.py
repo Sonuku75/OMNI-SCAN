@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_v1_router
+from app.core.rate_limit import RateLimitMiddleware
 from app.core.config import settings
 from app.core.errors import (
     OmniScanException,
@@ -44,6 +45,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
 )
+
+# In-memory sliding-window rate limiting middleware
+app.add_middleware(RateLimitMiddleware)
 
 # Exception handlers
 app.add_exception_handler(OmniScanException, omniscan_exception_handler)
@@ -109,7 +113,7 @@ async def root_health() -> HealthResponse:
                 image=image_status,
                 audio=audio_status,
                 video=video_status,
-                provenance=DetectorStatus.NOT_CONFIGURED,
+                provenance=DetectorStatus.AVAILABLE,
             ),
         ),
     )

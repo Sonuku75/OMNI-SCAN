@@ -18,6 +18,7 @@ from .analyses import (
     ProvenanceResultSchema,
 )
 from .reports import ForensicReportResponse
+from .auth import RegisterRequest, LoginRequest, UserResponse, AuthResponse
 
 __all__ = [
     "AnalysisStatus",
@@ -38,4 +39,8 @@ __all__ = [
     "DetectorResultSchema",
     "ProvenanceResultSchema",
     "ForensicReportResponse",
+    "RegisterRequest",
+    "LoginRequest",
+    "UserResponse",
+    "AuthResponse",
 ]

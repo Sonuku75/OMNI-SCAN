@@ -68,6 +68,36 @@ class DetectorNotConfiguredError(OmniScanException):
         )
 
 
+class AuthenticationError(OmniScanException):
+    def __init__(self, message: str = "Authentication failed", details: Optional[Any] = None):
+        super().__init__(
+            message=message,
+            code="AUTHENTICATION_FAILED",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            details=details,
+        )
+
+
+class PermissionDeniedError(OmniScanException):
+    def __init__(self, message: str = "Permission denied", details: Optional[Any] = None):
+        super().__init__(
+            message=message,
+            code="PERMISSION_DENIED",
+            status_code=status.HTTP_403_FORBIDDEN,
+            details=details,
+        )
+
+
+class ConflictError(OmniScanException):
+    def __init__(self, message: str = "Resource conflict", details: Optional[Any] = None):
+        super().__init__(
+            message=message,
+            code="CONFLICT",
+            status_code=status.HTTP_409_CONFLICT,
+            details=details,
+        )
+
+
 async def omniscan_exception_handler(request: Request, exc: OmniScanException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,

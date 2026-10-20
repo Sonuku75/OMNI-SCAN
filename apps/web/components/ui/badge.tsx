@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { AnalysisStatus, DetectorStatus } from "@/types/api";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "default" | "success" | "warning" | "danger" | "info" | "outline";
+  variant?: "default" | "success" | "warning" | "danger" | "info" | "outline" | "bronze";
   status?: AnalysisStatus | DetectorStatus | string;
 }
 
@@ -39,25 +39,34 @@ export function Badge({ className, variant = "default", status, children, ...pro
   }
 
   const variants = {
-    default: "bg-omni-surfaceHover text-omni-muted border-omni-border",
-    success: "bg-emerald-950/60 text-emerald-400 border-emerald-800/50",
-    warning: "bg-amber-950/60 text-amber-400 border-amber-800/50",
-    danger: "bg-rose-950/60 text-rose-400 border-rose-800/50",
-    info: "bg-omni-secondary/10 text-omni-secondary border-omni-secondary/30",
-    outline: "bg-transparent text-omni-text border-omni-border",
+    // 3D glossy jelly pill styles in rustic workstation theme
+    default:
+      "bg-gradient-to-b from-[#4A3321] to-[#3B281A] text-[#F0DDB8] border border-[#B58A4C]/70",
+    success:
+      "bg-gradient-to-b from-[#28734A] to-[#1C5234] text-[#F0DDB8] border border-[#173D2D]",
+    warning:
+      "bg-gradient-to-b from-[#C97A24] to-[#8C5214] text-[#F0DDB8] border border-[#63390B]",
+    danger:
+      "bg-gradient-to-b from-[#C43E32] to-[#A9362B] text-[#FFF5F5] border border-[#7A241B]",
+    info:
+      "bg-gradient-to-b from-[#3177AE] to-[#245C88] text-[#F0DDB8] border border-[#194161]",
+    bronze:
+      "bg-gradient-to-b from-[#E5C995] to-[#B58A4C] text-[#24170F] border border-[#7A5B2E]",
+    outline:
+      "bg-[#D8B98A]/35 text-[#24170F] border border-[#B58A4C]/70 shadow-[inset_0_1px_2px_rgba(36,23,15,0.25)]",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border font-mono tracking-tight",
+        "skeuo-jelly inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-tight select-none",
         variants[computedVariant],
         className
       )}
       {...props}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
-      {children || status}
+      <span className="w-1.5 h-1.5 rounded-full bg-white/90 shadow-[0_0_3px_rgba(255,255,255,0.9)]" />
+      <span>{children || status}</span>
     </span>
   );
 }

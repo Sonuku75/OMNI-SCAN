@@ -7,6 +7,7 @@ from app.core.logging import logger
 from app.detectors.base import DetectorOutput
 from app.detectors.video.detector import VideoForensicsDetector
 from app.detectors.video.model_adapter import PretrainedVideoModelAdapter
+from app.provenance.service import ProvenanceVerifier
 from app.schemas.common import DetectorStatus
 
 
@@ -52,7 +53,8 @@ class VideoAnalysisService:
             model_output = await self.model_adapter.predict(temp_file_path, metadata_hint)
 
             # 3. Check for C2PA provenance markers in video container
-            provenance_check = self._check_c2pa_provenance(video_bytes)
+            vid_mime = "video/quicktime" if original_filename.lower().endswith(".mov") else "video/mp4"
+            provenance_check = ProvenanceVerifier.verify(video_bytes, original_filename, vid_mime)
 
             # 4. Synthesize assessment label and grounded summary
             label, score, semantics, summary = self._synthesize_assessment(

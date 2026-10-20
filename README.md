@@ -1,7 +1,8 @@
 # OmniScan — AI Deepfake, Voice Clone & Synthetic Media Detection Platform
 
 [![Technology Stack](https://img.shields.io/badge/Stack-Next.js%20%7C%20FastAPI%20%7C%20OpenCV%20%7C%20PostgreSQL-cyan.svg)](TECH_STACK_MAPPING.md)
-[![Milestone](https://img.shields.io/badge/Milestone-M0%20Repository%20Foundation-mint.svg)](docs/MILESTONES.md)
+[![Milestones](https://img.shields.io/badge/Milestones-M0--M8%20Complete-emerald.svg)](docs/MILESTONES.md)
+[![Documentation](https://img.shields.io/badge/Docs-Local%20Dev%20Guide-blue.svg)](docs/LOCAL_DEV_GUIDE.md)
 
 OmniScan is a multi-modal synthetic media forensics and deepfake detection platform designed to scrutinize images, audio recordings, and videos for algorithmic manipulation, generative artifacts, and voice cloning.
 

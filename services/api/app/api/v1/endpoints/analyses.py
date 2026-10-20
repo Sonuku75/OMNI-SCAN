@@ -6,11 +6,13 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.auth import get_optional_user, verify_ownership
 from app.core.database import get_db
 from app.core.errors import NotFoundError, OmniScanException
 from app.core.state_machine import AnalysisStateMachine
 from app.models.analysis import Analysis
 from app.models.upload import Upload
+from app.models.user import User
 from app.schemas.analyses import (
     AnalysisCreateRequest,
     AnalysisCreateResponse,
@@ -37,6 +39,7 @@ router = APIRouter()
 async def create_analysis(
     payload: AnalysisCreateRequest,
     background_tasks: BackgroundTasks,
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ) -> AnalysisCreateResponse:
     """
@@ -49,6 +52,9 @@ async def create_analysis(
     upload = result.scalar_one_or_none()
     if not upload:
         raise NotFoundError(f"Upload asset with ID '{payload.upload_id}' not found.")
+
+    # 1b. Verify caller ownership of upload if owned
+    verify_ownership(current_user, upload.owner_id)
 
     # 2. Check for existing active analysis on this upload (prevent duplicate processing)
     active_stmt = (
@@ -75,7 +81,7 @@ async def create_analysis(
     analysis = Analysis(
         id=analysis_id,
         upload_id=upload.id,
-        owner_id=None,
+        owner_id=current_user.id if current_user else None,
         status=AnalysisStatus.QUEUED.value,
         assessment_label=None,
         assessment_score=None,
@@ -108,6 +114,7 @@ async def create_analysis(
 async def retry_analysis(
     analysis_id: str,
     background_tasks: BackgroundTasks,
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ) -> AnalysisCreateResponse:
     """
@@ -123,6 +130,8 @@ async def retry_analysis(
     analysis = result.scalar_one_or_none()
     if not analysis or analysis.upload.deleted_at is not None:
         raise NotFoundError(f"Analysis with ID '{analysis_id}' not found.")
+
+    verify_ownership(current_user, analysis.owner_id)
 
     current_status = AnalysisStatus(analysis.status)
     if current_status in (AnalysisStatus.QUEUED, AnalysisStatus.PROCESSING):
@@ -166,6 +175,7 @@ async def list_analyses(
     page_size: int = Query(20, ge=1, le=100),
     media_type: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ) -> AnalysisListResponse:
     """
@@ -179,6 +189,11 @@ async def list_analyses(
         .order_by(Analysis.created_at.desc())
     )
 
+    if current_user:
+        query = query.where((Analysis.owner_id == current_user.id) | (Analysis.owner_id.is_(None)))
+    else:
+        query = query.where(Analysis.owner_id.is_(None))
+
     if media_type and media_type != "all":
         query = query.where(Upload.media_type == media_type)
     if status and status != "all":
@@ -189,6 +204,11 @@ async def list_analyses(
         .join(Analysis.upload)
         .where(Upload.deleted_at.is_(None))
     )
+    if current_user:
+        count_query = count_query.where((Analysis.owner_id == current_user.id) | (Analysis.owner_id.is_(None)))
+    else:
+        count_query = count_query.where(Analysis.owner_id.is_(None))
+
     if media_type and media_type != "all":
         count_query = count_query.where(Upload.media_type == media_type)
     if status and status != "all":
@@ -232,6 +252,7 @@ async def list_analyses(
 )
 async def get_analysis_detail(
     analysis_id: str,
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ) -> AnalysisDetailResponse:
     """
@@ -252,8 +273,35 @@ async def get_analysis_detail(
     if not analysis or analysis.upload.deleted_at is not None:
         raise NotFoundError(f"Analysis with ID '{analysis_id}' not found.")
 
+    verify_ownership(current_user, analysis.owner_id)
+
     up = analysis.upload
     prov = analysis.provenance_checks[0] if analysis.provenance_checks else None
+
+    prov_details = "Provenance check completed."
+    if prov:
+        if prov.metadata_json and "details" in prov.metadata_json:
+            prov_details = str(prov.metadata_json["details"])
+        elif prov.status == "verified":
+            prov_details = "Cryptographic C2PA / JUMBF Content Credentials verified. Signing authority certified."
+        elif prov.status == "invalid":
+            prov_details = "C2PA / JUMBF provenance manifest failed cryptographic signature verification."
+        elif prov.status == "no_credentials_found":
+            prov_details = "No C2PA Content Credentials or digital signatures found. Standard container metadata inspected."
+        elif prov.status == "not_supported":
+            prov_details = "Media container format does not support standardized JUMBF/C2PA inspection."
+
+    dynamic_limitations = []
+    for dr in analysis.detector_results:
+        if dr.limitations_json:
+            for lim in dr.limitations_json:
+                if lim not in dynamic_limitations:
+                    dynamic_limitations.append(lim)
+    if not dynamic_limitations:
+        dynamic_limitations = [
+            "Forensic analysis produces probabilistic observations of statistical artifacts rather than mathematical certainty.",
+            "Compression algorithms (e.g., social media re-encoding) can attenuate high-frequency forensic features.",
+        ]
 
     return AnalysisDetailResponse(
         analysis_id=analysis.id,
@@ -290,13 +338,10 @@ async def get_analysis_detail(
             status=prov.status if prov else "not_supported",
             metadata=prov.metadata_json if prov else {},
             content_credentials_status=prov.content_credentials_status if prov else "unverified",
-            details="C2PA verification scheduled for Milestone 7 integration.",
+            details=prov_details,
         ),
         human_review_recommended=True,
-        limitations_disclosure=[
-            "Milestone 3 orchestration pipeline active: AI detection models are not yet configured.",
-            "Probabilistic confidence values are only generated when genuine inference adapters are active.",
-        ],
+        limitations_disclosure=dynamic_limitations,
         created_at=analysis.created_at,
         started_at=analysis.started_at,
         completed_at=analysis.completed_at,
@@ -310,6 +355,7 @@ async def get_analysis_detail(
 )
 async def delete_analysis(
     analysis_id: str,
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """
@@ -326,6 +372,8 @@ async def delete_analysis(
 
     if not analysis:
         raise NotFoundError(f"Analysis with ID '{analysis_id}' not found.")
+
+    verify_ownership(current_user, analysis.owner_id)
 
     upload = analysis.upload
     now = datetime.now(timezone.utc)

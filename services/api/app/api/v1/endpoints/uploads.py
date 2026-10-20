@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth import get_optional_user
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.errors import (
@@ -12,6 +14,7 @@ from app.core.errors import (
 )
 from app.core.security import compute_sha256, sanitize_filename, validate_file_signature
 from app.models.upload import Upload
+from app.models.user import User
 from app.schemas.common import MediaType
 from app.schemas.uploads import UploadResponse
 from app.storage import get_storage_adapter
@@ -27,6 +30,7 @@ router = APIRouter()
 )
 async def upload_media(
     file: UploadFile = File(...),
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ) -> UploadResponse:
     """
@@ -81,7 +85,7 @@ async def upload_media(
     now = datetime.now(timezone.utc)
     upload_record = Upload(
         id=upload_id,
-        owner_id=None,  # Demo / unauthenticated session
+        owner_id=current_user.id if current_user else None,
         object_key=object_key,
         original_filename=cleaned_name,
         media_type=media_type.value,

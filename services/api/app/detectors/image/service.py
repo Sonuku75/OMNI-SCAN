@@ -7,6 +7,7 @@ from app.core.logging import logger
 from app.detectors.base import DetectorOutput
 from app.detectors.image.detector import ImageForensicsDetector
 from app.detectors.image.model_adapter import PretrainedImageModelAdapter
+from app.provenance.service import ProvenanceVerifier
 from app.schemas.common import DetectorStatus
 
 
@@ -53,15 +54,9 @@ class ImageAnalysisService:
                 temp_file_path, metadata_hint
             )
 
-            # 3. Check for C2PA / JUMBF binary box indicators
-            has_c2pa = (b"c2pa" in image_bytes) or (b"jumb" in image_bytes)
-            provenance_status = "verified" if has_c2pa else "no_credentials_found"
-            content_credentials_status = "valid_manifest" if has_c2pa else "unverified"
-            provenance_details = (
-                "Cryptographic C2PA / JUMBF manifest box detected in media stream."
-                if has_c2pa
-                else "No cryptographically signed C2PA / Coalition for Content Provenance manifest found in file chunks."
-            )
+            # 3. Check for C2PA / JUMBF binary box & provenance integrity
+            img_mime = "image/jpeg" if original_filename.lower().endswith((".jpg", ".jpeg")) else "image/png"
+            provenance_check = ProvenanceVerifier.verify(image_bytes, original_filename, img_mime)
 
             # 4. Formulate evidence-grounded summary and assessment label
             assessment_label, assessment_score, score_semantics, summary = (
@@ -74,15 +69,7 @@ class ImageAnalysisService:
                 "score_semantics": score_semantics,
                 "summary": summary,
                 "detector_results": [forensics_output, model_output],
-                "provenance": {
-                    "status": provenance_status,
-                    "content_credentials_status": content_credentials_status,
-                    "details": provenance_details,
-                    "metadata": {
-                        "c2pa_detected": has_c2pa,
-                        "file_sha256": sha256,
-                    },
-                },
+                "provenance": provenance_check,
                 "human_review_recommended": bool(assessment_label in ("suspicious", "inconclusive")),
             }
 

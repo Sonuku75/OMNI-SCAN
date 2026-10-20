@@ -4,7 +4,9 @@
   "private": true,
   "description": "OmniScan — AI Deepfake, Voice Clone & Synthetic Media Detection Platform",
   "scripts": {
+    "dev": "npm --prefix apps/web run dev",
     "dev:web": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/web run build",
     "build:web": "npm --prefix apps/web run build",
     "lint:web": "npm --prefix apps/web run lint",
     "typecheck:web": "npm --prefix apps/web run typecheck"

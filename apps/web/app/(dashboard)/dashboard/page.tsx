@@ -12,12 +12,15 @@ import {
   ShieldCheck,
   Cpu,
   Clock,
-  Sparkles,
   ExternalLink,
+  Sliders,
+  Calendar,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Token } from "@/components/ui/token";
+import { Rivet } from "@/components/ui/rivet";
 import { apiClient } from "@/lib/api-client";
 import { AnalysisSummary, HealthResponse } from "@/types/api";
 import { formatDate } from "@/lib/utils";
@@ -107,211 +110,285 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Banner / Sample Data Notice */}
+      {/* Top Banner / Welcome Plaque */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b-2 border-[#B58A4C]/60">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F0DDB8] tracking-tight drop-shadow-[0_1px_2px_rgba(18,11,7,0.8)]">
+            Forensic Workstation Console
+          </h1>
+          <p className="text-xs sm:text-sm text-[#D8B98A]">
+            Real-time multi-modal synthetic media verification & artifact analysis.
+          </p>
+        </div>
+
+        {/* Date Plaque with Corner Screws */}
+        <div className="relative self-start sm:self-auto px-4 py-2 rounded-xl bg-gradient-to-b from-[#3B281A] to-[#24170F] border border-[#B58A4C] shadow-[0_3px_8px_rgba(18,11,7,0.5),inset_0_1px_0_rgba(229,201,149,0.25)] flex items-center gap-2.5 select-none">
+          <Rivet size="sm" rotation={15} />
+          <Calendar className="w-4 h-4 text-[#E5C995]" />
+          <div className="text-xs font-bold text-[#F0DDB8] font-mono">
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </div>
+          <Rivet size="sm" rotation={85} />
+        </div>
+      </div>
+
+      {/* Sample Data Notice */}
       {isUsingSampleData && (
-        <div className="p-3 rounded-lg bg-omni-surface border border-omni-border/70 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-omni-muted">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
+        <div className="p-3.5 rounded-xl skeuo-recessed border border-[#B58A4C]/70 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2.5 text-[#664830]">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#C97A24] shadow-[0_0_8px_#C97A24]" />
             <span>
-              <strong className="text-omni-text">Notice:</strong> Displaying representative demo sample items until backend persistence is populated in Milestone 1/2.
+              <strong className="text-[#24170F]">Forensic Telemetry:</strong> Displaying representative milestone sample records. Real file uploads stream to PostgreSQL & MinIO storage.
             </span>
           </div>
-          <Badge variant="info">Sample Demonstration Data</Badge>
+          <Badge variant="warning">Sample Demonstration Records</Badge>
         </div>
       )}
 
-      {/* KPI Cards */}
+      {/* 4 Rustic Skeuomorphic KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Total Ingested */}
         <Card hoverEffect>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-omni-muted uppercase tracking-wider">
-              Total Ingested
-            </span>
-            <ScanEye className="w-4 h-4 text-omni-primary" />
+          <div className="flex items-center gap-3.5">
+            <Token color="green" size="md">
+              <ScanEye className="w-5 h-5 text-white" />
+            </Token>
+            <div>
+              <span className="text-[11px] font-bold text-[#664830] uppercase tracking-wider block">
+                Total Ingested
+              </span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-2xl font-black font-mono text-[#24170F]">
+                  {totalAnalyses}
+                </span>
+                <span className="text-[11px] text-[#664830] font-medium">assets</span>
+              </div>
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-omni-text">{totalAnalyses}</span>
-            <span className="text-xs text-omni-muted">assets</span>
+          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#664830]">
+            <span>Forensic Sessions</span>
+            <span className="font-semibold text-[#28734A]">Verified</span>
           </div>
-          <p className="mt-1 text-[11px] text-omni-muted">Forensic analysis sessions</p>
         </Card>
 
+        {/* Card 2: Flagged For Review */}
         <Card hoverEffect>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-omni-muted uppercase tracking-wider">
-              Flagged For Review
-            </span>
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
+          <div className="flex items-center gap-3.5">
+            <Token color="bronze" size="md">
+              <AlertTriangle className="w-5 h-5 text-white" />
+            </Token>
+            <div>
+              <span className="text-[11px] font-bold text-[#664830] uppercase tracking-wider block">
+                Flagged For Review
+              </span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-2xl font-black font-mono text-[#C97A24]">
+                  {reviewNeededCount}
+                </span>
+                <span className="text-[11px] text-[#664830] font-medium">findings</span>
+              </div>
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-amber-400">
-              {reviewNeededCount}
-            </span>
-            <span className="text-xs text-omni-muted">findings</span>
+          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#664830]">
+            <span>Synthetic Anomaly</span>
+            <span className="font-semibold text-[#C97A24]">Human Audit Advised</span>
           </div>
-          <p className="mt-1 text-[11px] text-omni-muted">Human verification advised</p>
         </Card>
 
+        {/* Card 3: Multi-modal Breakdown */}
         <Card hoverEffect>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-omni-muted uppercase tracking-wider">
-              Media Breakdown
-            </span>
-            <Cpu className="w-4 h-4 text-omni-secondary" />
+          <div className="flex items-center gap-3.5">
+            <Token color="blue" size="md">
+              <Cpu className="w-5 h-5 text-white" />
+            </Token>
+            <div>
+              <span className="text-[11px] font-bold text-[#664830] uppercase tracking-wider block">
+                Modal Distribution
+              </span>
+              <div className="flex items-center gap-2 mt-1 text-xs font-mono font-bold text-[#24170F]">
+                <span className="flex items-center gap-1">
+                  <ImageIcon className="w-3.5 h-3.5 text-[#28734A]" /> {imageCount}
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Mic className="w-3.5 h-3.5 text-[#C97A24]" /> {audioCount}
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Video className="w-3.5 h-3.5 text-[#245C88]" /> {videoCount}
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="mt-2 flex items-center gap-3 text-xs font-mono">
-            <span className="flex items-center gap-1 text-omni-text">
-              <ImageIcon className="w-3.5 h-3.5 text-omni-primary" /> {imageCount}
-            </span>
-            <span className="flex items-center gap-1 text-omni-text">
-              <Mic className="w-3.5 h-3.5 text-omni-secondary" /> {audioCount}
-            </span>
-            <span className="flex items-center gap-1 text-omni-text">
-              <Video className="w-3.5 h-3.5 text-cyan-400" /> {videoCount}
-            </span>
+          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#664830]">
+            <span>Spectrum Analyzers</span>
+            <span className="font-semibold text-[#245C88]">3 Modalities</span>
           </div>
-          <p className="mt-1 text-[11px] text-omni-muted">Multi-modal distribution</p>
         </Card>
 
+        {/* Card 4: Integrity Guard */}
         <Card hoverEffect>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-omni-muted uppercase tracking-wider">
-              Active Security Guard
-            </span>
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <div className="flex items-center gap-3.5">
+            <Token color="red" size="md">
+              <ShieldCheck className="w-5 h-5 text-white" />
+            </Token>
+            <div>
+              <span className="text-[11px] font-bold text-[#664830] uppercase tracking-wider block">
+                Integrity Guard
+              </span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span className="text-xl font-black text-[#28734A]">
+                  ENFORCED
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-base font-bold text-emerald-400">Enforced</span>
+          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#664830]">
+            <span>Audit Standard</span>
+            <span className="font-semibold text-[#28734A]">Zero-Hallucination</span>
           </div>
-          <p className="mt-1 text-[11px] text-omni-muted">Zero-hallucination disclaimers</p>
         </Card>
       </div>
 
-      {/* Main Grid: Recent Analyses & Detector Status */}
+      {/* Main Section: Recent Analyses & Detector Stack Matrix */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Analyses List */}
+        {/* Recent Analyses Instrument Console */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-omni-text tracking-tight">
-                Recent Forensic Analyses
-              </h3>
-              <p className="text-xs text-omni-muted">
-                Inspect evidence and calibrated uncertainty signals.
-              </p>
+          <div className="skeuo-card p-2">
+            <div className="bg-gradient-to-r from-[#4A3321] to-[#3B281A] px-4 py-2.5 rounded-lg flex items-center justify-between border border-[#B58A4C] shadow-[inset_0_1px_0_rgba(229,201,149,0.25)]">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-[#E5C995]" />
+                <h3 className="text-sm font-bold text-[#F0DDB8] tracking-wide drop-shadow-[0_1px_1px_rgba(18,11,7,0.8)]">
+                  Recent Forensic Analyses
+                </h3>
+              </div>
+              <Link
+                href="/analyses"
+                className="text-xs font-semibold text-[#E5C995] hover:text-[#F0DDB8] flex items-center gap-1 transition-colors drop-shadow-[0_1px_1px_rgba(18,11,7,0.8)]"
+              >
+                <span>View Full Archive</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-            <Link
-              href="/analyses"
-              className="text-xs font-medium text-omni-primary hover:text-omni-primaryHover flex items-center gap-1"
-            >
-              View all history <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
 
-          <div className="space-y-3">
-            {analyses.length === 0 ? (
-              <Card className="text-center py-10">
-                <ScanEye className="w-8 h-8 text-omni-muted mx-auto mb-2" />
-                <p className="text-sm font-medium text-omni-text">No analyses recorded</p>
-                <p className="text-xs text-omni-muted mt-1">
-                  Upload an image, audio, or video file to start forensic analysis.
-                </p>
-                <Link href="/analyze" className="mt-4 inline-block">
-                  <Button size="sm">Start First Analysis</Button>
-                </Link>
-              </Card>
-            ) : (
-              analyses.map((item) => (
-                <Card
-                  key={item.analysis_id}
-                  hoverEffect
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4"
-                >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="p-2.5 rounded-lg bg-omni-bg border border-omni-border shrink-0 mt-0.5">
-                      {item.media_type === "image" && (
-                        <ImageIcon className="w-4 h-4 text-omni-primary" />
-                      )}
-                      {item.media_type === "audio" && (
-                        <Mic className="w-4 h-4 text-omni-secondary" />
-                      )}
-                      {item.media_type === "video" && (
-                        <Video className="w-4 h-4 text-cyan-400" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-omni-text truncate max-w-xs">
-                          {item.filename}
-                        </span>
-                        <Badge status={item.status} />
+            {/* List / Table Area */}
+            <div className="p-3 space-y-2.5">
+              {analyses.length === 0 ? (
+                <div className="skeuo-plate text-center py-12 p-6">
+                  <ScanEye className="w-10 h-10 text-[#664830] mx-auto mb-2" />
+                  <p className="text-sm font-bold text-[#24170F]">No analyses recorded</p>
+                  <p className="text-xs text-[#664830] mt-1">
+                    Upload an image, audio, or video file to start forensic analysis.
+                  </p>
+                  <Link href="/analyze" className="mt-4 inline-block">
+                    <Button variant="parchment" size="sm">
+                      Start First Analysis
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                analyses.map((item) => (
+                  <div
+                    key={item.analysis_id}
+                    className="skeuo-plate p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-transform hover:-translate-y-0.5"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="p-2 rounded-lg bg-[#D8B98A] border border-[#B58A4C] shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(36,23,15,0.3)]">
+                        {item.media_type === "image" && (
+                          <ImageIcon className="w-4 h-4 text-[#28734A]" />
+                        )}
+                        {item.media_type === "audio" && (
+                          <Mic className="w-4 h-4 text-[#C97A24]" />
+                        )}
+                        {item.media_type === "video" && (
+                          <Video className="w-4 h-4 text-[#245C88]" />
+                        )}
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-omni-muted mt-1 font-mono">
-                        <span>ID: {item.analysis_id.slice(0, 12)}...</span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {formatDate(item.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                    {item.assessment_score !== null && item.assessment_score !== undefined ? (
-                      <div className="text-right">
-                        <div className="text-xs font-mono font-bold text-omni-text">
-                          {(item.assessment_score * 100).toFixed(0)}% Score
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-[#24170F] truncate max-w-xs">
+                            {item.filename}
+                          </span>
+                          <Badge status={item.status} />
                         </div>
-                        <div className="text-[10px] text-omni-muted">Probabilistic</div>
+                        <div className="flex items-center gap-3 text-xs text-[#664830] mt-1 font-mono">
+                          <span>ID: {item.analysis_id.slice(0, 12)}...</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {formatDate(item.created_at)}
+                          </span>
+                        </div>
                       </div>
-                    ) : (
-                      <span className="text-xs text-omni-muted font-mono">
-                        {item.status === "detector_not_configured"
-                          ? "Adapter Unconfigured"
-                          : "Pending"}
-                      </span>
-                    )}
+                    </div>
 
-                    <Link href={`/analyses/${item.analysis_id}`}>
-                      <Button variant="outline" size="sm">
-                        Inspect
-                      </Button>
-                    </Link>
+                    <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                      {item.assessment_score !== null && item.assessment_score !== undefined ? (
+                        <div className="text-right">
+                          <div className="text-xs font-mono font-black text-[#24170F]">
+                            {(item.assessment_score * 100).toFixed(0)}% Score
+                          </div>
+                          <div className="text-[10px] text-[#664830] font-medium">
+                            Calibrated Prob.
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[#664830] font-mono">
+                          {item.status === "detector_not_configured"
+                            ? "Adapter Unconfigured"
+                            : "Pending"}
+                        </span>
+                      )}
+
+                      <Link href={`/analyses/${item.analysis_id}`}>
+                        <Button variant="parchment" size="sm">
+                          Inspect
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
-                </Card>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Detector Integration Status Matrix */}
+        {/* Right Column: Detector Telemetry Matrix & Quick Action */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-omni-text tracking-tight">
-                Detector Stack
-              </h3>
-              <p className="text-xs text-omni-muted">Honest integration telemetry</p>
+          <Card rivets={true}>
+            <div className="pb-3 border-b border-[#B58A4C]/35 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-[#24170F] tracking-tight">
+                  Detector Stack Telemetry
+                </h3>
+                <p className="text-xs text-[#664830]">Honest integration matrix</p>
+              </div>
+              <Link
+                href="/settings"
+                className="text-xs font-semibold text-[#173D2D] hover:text-[#28734A] hover:underline flex items-center gap-1"
+              >
+                <span>Config</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
             </div>
-            <Link
-              href="/settings"
-              className="text-xs text-omni-muted hover:text-omni-text flex items-center gap-1"
-            >
-              Config <ExternalLink className="w-3 h-3" />
-            </Link>
-          </div>
 
-          <Card className="space-y-4">
-            <div className="space-y-3">
+            <div className="pt-3 space-y-3">
               {/* Image Detector */}
-              <div className="flex items-center justify-between pb-3 border-b border-omni-border/60">
+              <div className="flex items-center justify-between pb-2.5 border-b border-[#B58A4C]/25">
                 <div className="flex items-center gap-2.5">
-                  <ImageIcon className="w-4 h-4 text-omni-primary" />
+                  <div className="p-1.5 rounded-lg bg-[#D8B98A] border border-[#B58A4C]">
+                    <ImageIcon className="w-3.5 h-3.5 text-[#28734A]" />
+                  </div>
                   <div>
-                    <div className="text-xs font-medium text-omni-text">
+                    <div className="text-xs font-bold text-[#24170F]">
                       Image Artifact Detector
                     </div>
-                    <div className="text-[10px] text-omni-muted font-mono">
+                    <div className="text-[10px] text-[#664830] font-mono">
                       spectral_frequency_v1
                     </div>
                   </div>
@@ -320,14 +397,16 @@ export default function DashboardPage() {
               </div>
 
               {/* Audio Detector */}
-              <div className="flex items-center justify-between pb-3 border-b border-omni-border/60">
+              <div className="flex items-center justify-between pb-2.5 border-b border-[#B58A4C]/25">
                 <div className="flex items-center gap-2.5">
-                  <Mic className="w-4 h-4 text-omni-secondary" />
+                  <div className="p-1.5 rounded-lg bg-[#D8B98A] border border-[#B58A4C]">
+                    <Mic className="w-3.5 h-3.5 text-[#C97A24]" />
+                  </div>
                   <div>
-                    <div className="text-xs font-medium text-omni-text">
+                    <div className="text-xs font-bold text-[#24170F]">
                       Voice Clone & Audio
                     </div>
-                    <div className="text-[10px] text-omni-muted font-mono">
+                    <div className="text-[10px] text-[#664830] font-mono">
                       vocoder_spectral_v1
                     </div>
                   </div>
@@ -336,14 +415,16 @@ export default function DashboardPage() {
               </div>
 
               {/* Video Detector */}
-              <div className="flex items-center justify-between pb-3 border-b border-omni-border/60">
+              <div className="flex items-center justify-between pb-2.5 border-b border-[#B58A4C]/25">
                 <div className="flex items-center gap-2.5">
-                  <Video className="w-4 h-4 text-cyan-400" />
+                  <div className="p-1.5 rounded-lg bg-[#D8B98A] border border-[#B58A4C]">
+                    <Video className="w-3.5 h-3.5 text-[#245C88]" />
+                  </div>
                   <div>
-                    <div className="text-xs font-medium text-omni-text">
+                    <div className="text-xs font-bold text-[#24170F]">
                       Video Frame & Temporal
                     </div>
-                    <div className="text-[10px] text-omni-muted font-mono">
+                    <div className="text-[10px] text-[#664830] font-mono">
                       ffmpeg_temporal_v1
                     </div>
                   </div>
@@ -351,15 +432,17 @@ export default function DashboardPage() {
                 <Badge variant="info">Milestone 6</Badge>
               </div>
 
-              {/* Provenance */}
+              {/* C2PA Provenance */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <div className="p-1.5 rounded-lg bg-[#D8B98A] border border-[#B58A4C]">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#28734A]" />
+                  </div>
                   <div>
-                    <div className="text-xs font-medium text-omni-text">
+                    <div className="text-xs font-bold text-[#24170F]">
                       Content Credentials (C2PA)
                     </div>
-                    <div className="text-[10px] text-omni-muted font-mono">
+                    <div className="text-[10px] text-[#664830] font-mono">
                       metadata_provenance_v1
                     </div>
                   </div>
@@ -368,29 +451,30 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-omni-border/60">
-              <div className="p-3 rounded-lg bg-omni-bg border border-omni-border text-xs text-omni-muted leading-relaxed">
-                <strong className="text-omni-text">Forensic Integrity Rule:</strong> Unconfigured
-                detectors yield explicit <code className="text-omni-primary font-mono text-[11px]">detector_not_configured</code>. OmniScan never simulates mock predictions.
-              </div>
+            {/* Disclaimer Plaque */}
+            <div className="mt-4 p-3 rounded-lg skeuo-recessed text-xs text-[#664830] leading-relaxed">
+              <strong className="text-[#24170F]">Forensic Rule:</strong> Inactive
+              detectors yield explicit <code className="text-[#173D2D] font-bold font-mono text-[11px] bg-[#F0DDB8] px-1 py-0.5 rounded border border-[#B58A4C]">detector_not_configured</code>. OmniScan never simulates mock predictions.
             </div>
           </Card>
 
-          {/* Quick Action Card */}
-          <Card className="bg-gradient-to-br from-omni-surface to-omni-surfaceHover border-omni-border p-5">
-            <h4 className="text-sm font-semibold text-omni-text mb-1">
-              Ready for Media Inspection?
-            </h4>
-            <p className="text-xs text-omni-muted mb-4 leading-relaxed">
-              Upload files to compute SHA-256 digests and trigger modular detector adapters.
-            </p>
-            <Link href="/analyze" className="w-full block">
-              <Button className="w-full gap-2">
-                <ScanEye className="w-4 h-4" />
-                <span>Open Media Analyzer</span>
-              </Button>
-            </Link>
-          </Card>
+          {/* Quick Launch Card */}
+          <div className="skeuo-card p-2 text-center select-none">
+            <div className="bg-gradient-to-b from-[#3B281A] to-[#24170F] p-4 rounded-xl border border-[#B58A4C] shadow-[inset_0_1px_0_rgba(229,201,149,0.25)] space-y-3">
+              <h4 className="text-sm font-bold text-[#F0DDB8]">
+                Launch Media Analysis
+              </h4>
+              <p className="text-xs text-[#D8B98A] leading-relaxed">
+                Upload image, audio, or video files to compute SHA-256 digests and trigger forensic pipeline adapters.
+              </p>
+              <Link href="/analyze" className="block w-full">
+                <Button variant="primary" className="w-full gap-2">
+                  <ScanEye className="w-4 h-4 text-[#E5C995]" />
+                  <span>Open Media Analyzer</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

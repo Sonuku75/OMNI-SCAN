@@ -7,6 +7,7 @@ from app.core.logging import logger
 from app.detectors.base import DetectorOutput
 from app.detectors.audio.detector import AudioForensicsDetector
 from app.detectors.audio.model_adapter import PretrainedAudioModelAdapter
+from app.provenance.service import ProvenanceVerifier
 from app.schemas.common import DetectorStatus
 
 
@@ -53,15 +54,9 @@ class AudioAnalysisService:
                 temp_file_path, metadata_hint
             )
 
-            # 3. Check for C2PA / JUMBF binary box indicators
-            has_c2pa = (b"c2pa" in audio_bytes) or (b"jumb" in audio_bytes)
-            provenance_status = "verified" if has_c2pa else "no_credentials_found"
-            content_credentials_status = "valid_manifest" if has_c2pa else "unverified"
-            provenance_details = (
-                "Cryptographic C2PA / JUMBF manifest box detected in audio stream."
-                if has_c2pa
-                else "No cryptographically signed C2PA / Coalition for Content Provenance manifest found in audio metadata."
-            )
+            # 3. Check for C2PA / JUMBF binary box & provenance integrity
+            aud_mime = "audio/wav" if original_filename.lower().endswith(".wav") else "audio/mpeg"
+            provenance_check = ProvenanceVerifier.verify(audio_bytes, original_filename, aud_mime)
 
             # 4. Formulate evidence-grounded summary and assessment
             assessment_label, assessment_score, score_semantics, summary = (
@@ -81,15 +76,7 @@ class AudioAnalysisService:
                 "summary": summary,
                 "duration_ms": duration_ms,
                 "detector_results": [forensics_output, model_output],
-                "provenance": {
-                    "status": provenance_status,
-                    "content_credentials_status": content_credentials_status,
-                    "details": provenance_details,
-                    "metadata": {
-                        "c2pa_detected": has_c2pa,
-                        "file_sha256": sha256,
-                    },
-                },
+                "provenance": provenance_check,
                 "human_review_recommended": bool(assessment_label in ("suspicious", "inconclusive")),
             }
 

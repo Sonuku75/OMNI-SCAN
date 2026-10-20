@@ -53,7 +53,7 @@ export interface DetectorResult {
 }
 
 export interface ProvenanceCheckResult {
-  status: "verified" | "incomplete" | "no_credentials_found" | "not_supported" | "failed";
+  status: "verified" | "invalid" | "incomplete" | "no_credentials_found" | "not_supported" | "failed";
   metadata: Record<string, unknown>;
   content_credentials_status: string;
   details?: string;
@@ -139,9 +139,29 @@ export interface ForensicReport {
     semantics: string | null;
   }>;
   provenance_summary: string;
+  provenance_status?: string | null;
+  provenance_details?: Record<string, unknown> | null;
+  assessment_label?: string | null;
+  assessment_score?: number | null;
+  score_semantics?: string | null;
   limitations_and_uncertainty: string[];
   human_review_recommended: boolean;
   disclaimer: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  full_name?: string | null;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
 }
 
 export interface ApiErrorResponse {
