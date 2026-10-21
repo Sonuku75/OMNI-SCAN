@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from .common import AnalysisStatus, DetectorStatus, MediaType
+from .evidence import AnalysisExplanationSchema, EvidenceRecordSchema
 
 
 class AnalysisCreateRequest(BaseModel):
@@ -40,6 +41,7 @@ class AnalysisSummarySchema(BaseModel):
     filename: str
     media_type: MediaType
     status: AnalysisStatus
+    verdict: Optional[str] = None
     assessment_label: Optional[str] = None
     assessment_score: Optional[float] = None
     score_semantics: Optional[str] = None
@@ -63,6 +65,15 @@ class UploadDetailSchema(BaseModel):
 class AnalysisDetailResponse(BaseModel):
     analysis_id: str
     status: AnalysisStatus
+    verdict: Optional[str] = None
+    verdict_status: Optional[str] = None
+    explanation: Optional[AnalysisExplanationSchema] = None
+    evidence_records: List[EvidenceRecordSchema] = Field(default_factory=list)
+    supporting_evidence: List[EvidenceRecordSchema] = Field(default_factory=list)
+    conflicting_evidence: List[EvidenceRecordSchema] = Field(default_factory=list)
+    neutral_evidence: List[EvidenceRecordSchema] = Field(default_factory=list)
+    unavailable_evidence: List[EvidenceRecordSchema] = Field(default_factory=list)
+    video_audio_track: Optional[Dict[str, Any]] = None
     assessment_label: Optional[str] = None
     assessment_score: Optional[float] = None
     score_semantics: Optional[str] = None
@@ -72,6 +83,13 @@ class AnalysisDetailResponse(BaseModel):
     provenance: ProvenanceResultSchema
     human_review_recommended: bool = True
     limitations_disclosure: List[str] = Field(default_factory=list)
+    limitations: List[str] = Field(default_factory=list)
+    model_inference: Optional[Dict[str, Any]] = None
+    forensic_heuristics: Optional[Dict[str, Any]] = None
+    metadata_and_provenance: Optional[Dict[str, Any]] = None
+    model_version: Optional[str] = None
+    calibration_status: Optional[str] = None
+    evaluation_reference: Optional[str] = None
     created_at: datetime
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None

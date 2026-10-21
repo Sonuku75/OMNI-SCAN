@@ -1,6 +1,6 @@
 import html
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import HTMLResponse
 from sqlalchemy import select
@@ -10,11 +10,15 @@ from sqlalchemy.orm import selectinload
 from app.core.auth import get_optional_user, verify_ownership
 from app.core.database import get_db
 from app.core.errors import NotFoundError
+from app.detectors.base import DetectorOutput
+from app.detectors.evidence_synthesizer import EvidenceSynthesizer
 from app.models.analysis import Analysis
 from app.models.detector_result import DetectorResult
+from app.models.provenance import ProvenanceCheck
 from app.models.upload import Upload
 from app.models.user import User
-from app.schemas.common import MediaType
+from app.schemas.common import DetectorStatus, MediaType
+from app.schemas.evidence import AnalysisExplanationSchema, EvidenceRecordSchema
 from app.schemas.reports import (
     DetectorBreakdownSchema,
     ForensicReportResponse,
@@ -352,6 +356,83 @@ async def get_forensic_report(
     prov = analysis.provenance_checks[0] if analysis.provenance_checks else None
     prov_summary = synthesize_provenance_summary(prov)
 
+    model_inference_data = None
+    model_ver = None
+    cal_status = None
+    eval_ref = None
+
+    for dr in analysis.detector_results:
+        sig = dr.signals_json or {}
+        if "model_adapter" in dr.detector_name or "model" in dr.detector_name:
+            model_ver = dr.detector_version
+            cal_status = sig.get("calibration_status")
+            eval_ref = sig.get("evaluation_reference")
+            if dr.status == "completed" and dr.score is not None:
+                model_inference_data = sig.get("model_inference") or {
+                    "architecture": sig.get("model_architecture"),
+                    "synthetic_probability": dr.score,
+                    "calibrated_threshold": sig.get("calibrated_threshold", 0.37),
+                    "prediction": sig.get("prediction_label"),
+                }
+            elif dr.status == "not_configured":
+                cal_status = "unconfigured"
+
+    # Synthesize evidence records, explanation, and verdict
+    forensics_out = DetectorOutput(
+        detector_name=f"{up.media_type}_forensics_v1",
+        detector_version="1.0.0",
+        status=DetectorStatus.NOT_CONFIGURED,
+        score=None,
+        score_semantics="not_applicable",
+    )
+    model_out = DetectorOutput(
+        detector_name=f"{up.media_type}_model_adapter_v1",
+        detector_version="1.0.0",
+        status=DetectorStatus.NOT_CONFIGURED,
+        score=None,
+        score_semantics="not_applicable",
+    )
+    for dr in analysis.detector_results:
+        d_out = DetectorOutput(
+            detector_name=dr.detector_name,
+            detector_version=dr.detector_version,
+            status=DetectorStatus(dr.status),
+            score=dr.score,
+            score_semantics=dr.score_semantics or "not_applicable",
+            signals=dr.signals_json or {},
+            limitations=dr.limitations_json or [],
+        )
+        if "forensic" in dr.detector_name:
+            forensics_out = d_out
+        elif "model" in dr.detector_name or "adapter" in dr.detector_name:
+            model_out = d_out
+
+    prov_data = {
+        "status": prov.status if prov else "no_credentials_found",
+        "metadata": prov.metadata_json if prov else {},
+        "content_credentials_status": prov.content_credentials_status if prov else "unverified",
+    }
+
+    if up.media_type == "image":
+        synth = EvidenceSynthesizer.synthesize_image_analysis(forensics_out, model_out, prov_data, up.original_filename)
+    elif up.media_type == "video":
+        synth = EvidenceSynthesizer.synthesize_video_analysis(forensics_out, model_out, prov_data, up.original_filename)
+    elif up.media_type == "audio":
+        synth = EvidenceSynthesizer.synthesize_audio_analysis(forensics_out, model_out, prov_data, up.original_filename)
+    else:
+        synth = {}
+
+    verdict = synth.get("verdict")
+    verdict_status = synth.get("verdict_status")
+    explanation_raw = synth.get("explanation")
+    explanation_obj = AnalysisExplanationSchema(**explanation_raw) if explanation_raw else None
+    evidence_records_objs = [EvidenceRecordSchema(**r) for r in synth.get("evidence_records", [])]
+    supporting_evidence_objs = [EvidenceRecordSchema(**r) for r in synth.get("supporting_evidence", [])]
+    conflicting_evidence_objs = [EvidenceRecordSchema(**r) for r in synth.get("conflicting_evidence", [])]
+    neutral_evidence_objs = [EvidenceRecordSchema(**r) for r in synth.get("neutral_evidence", [])]
+    unavailable_evidence_objs = [EvidenceRecordSchema(**r) for r in synth.get("unavailable_evidence", [])]
+    video_audio_track_data = synth.get("video_audio_track")
+
     return ForensicReportResponse(
         report_id=f"REP-{analysis.id[:8].upper()}",
         analysis_id=analysis.id,
@@ -362,8 +443,18 @@ async def get_forensic_report(
             media_type=MediaType(up.media_type),
             size_bytes=up.size_bytes,
         ),
-        summary_statement=analysis.summary
-        or "Analysis completed. Review individual detector breakdowns for evidence.",
+        verdict=verdict,
+        verdict_status=verdict_status,
+        explanation=explanation_obj,
+        evidence_records=evidence_records_objs,
+        supporting_evidence=supporting_evidence_objs,
+        conflicting_evidence=conflicting_evidence_objs,
+        neutral_evidence=neutral_evidence_objs,
+        unavailable_evidence=unavailable_evidence_objs,
+        video_audio_track=video_audio_track_data,
+        summary_statement=explanation_raw.get("summary") if explanation_raw else (
+            analysis.summary or "Analysis completed. Review individual detector breakdowns for evidence."
+        ),
         evidence_points=self_synthesize_evidence(up, analysis.detector_results),
         detector_breakdown=detector_breakdowns,
         provenance_summary=prov_summary,
@@ -374,6 +465,10 @@ async def get_forensic_report(
         score_semantics=analysis.score_semantics,
         limitations_and_uncertainty=self_synthesize_limitations(analysis.detector_results),
         human_review_recommended=True,
+        model_inference=model_inference_data,
+        model_version=model_ver,
+        calibration_status=cal_status,
+        evaluation_reference=eval_ref,
         disclaimer=(
             "Forensic analysis outputs are probabilistic representations of statistical artifacts. "
             "They do not constitute legal or absolute proof of authenticity or manipulation. "

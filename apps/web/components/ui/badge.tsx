@@ -16,21 +16,29 @@ export function Badge({ className, variant = "default", status, children, ...pro
       case "available":
       case "verified":
       case "healthy":
+      case "online":
+      case "connected":
+      case "configured":
         computedVariant = "success";
         break;
       case "processing":
       case "queued":
       case "incomplete":
+      case "standby":
+      case "degraded":
         computedVariant = "warning";
         break;
       case "failed":
       case "unhealthy":
+      case "disconnected":
+      case "unavailable":
         computedVariant = "danger";
         break;
       case "detector_not_configured":
       case "not_configured":
       case "not_supported":
       case "disabled":
+      case "unknown":
         computedVariant = "info";
         break;
       default:
@@ -53,20 +61,31 @@ export function Badge({ className, variant = "default", status, children, ...pro
     bronze:
       "bg-gradient-to-b from-[#E5C995] to-[#B58A4C] text-[#24170F] border border-[#7A5B2E]",
     outline:
-      "bg-[#D8B98A]/35 text-[#24170F] border border-[#B58A4C]/70 shadow-[inset_0_1px_2px_rgba(36,23,15,0.25)]",
+      "bg-[#D8B98A]/45 text-[#302013] border border-[#B58A4C]/80 shadow-[inset_0_1px_2px_rgba(36,23,15,0.25)]",
+  };
+
+  const formatStatusText = (text: string) => {
+    if (text === "detector_not_configured" || text === "not_configured") return "Not Configured";
+    if (text === "configured") return "Configured";
+    if (text === "unavailable") return "Unavailable";
+    if (text === "unknown") return "Unknown";
+    if (text === "no_credentials_found") return "No Credentials";
+    return text.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   return (
     <span
       className={cn(
-        "skeuo-jelly inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-tight select-none",
+        "skeuo-jelly inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold tracking-tight select-none",
         variants[computedVariant],
         className
       )}
       {...props}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-white/90 shadow-[0_0_3px_rgba(255,255,255,0.9)]" />
-      <span>{children || status}</span>
+      <span>{children || (status ? formatStatusText(status) : "")}</span>
     </span>
   );
 }
+
+export const StatusBadge = Badge;

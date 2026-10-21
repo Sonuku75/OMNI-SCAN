@@ -1,10 +1,13 @@
+import io
 import os
 import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 import aiofiles
+import numpy as np
 
 from app.core.logging import logger
 from app.detectors.base import DetectorOutput
+from app.detectors.evidence_synthesizer import EvidenceSynthesizer
 from app.detectors.video.detector import VideoForensicsDetector
 from app.detectors.video.model_adapter import PretrainedVideoModelAdapter
 from app.provenance.service import ProvenanceVerifier
@@ -26,6 +29,25 @@ class VideoAnalysisService:
     def __init__(self):
         self.forensics_detector = VideoForensicsDetector()
         self.model_adapter = PretrainedVideoModelAdapter()
+
+    def _extract_audio_track(self, video_path: str) -> Optional[bytes]:
+        """
+        Attempts to safely decode the embedded audio stream from the video container.
+        Returns PCM WAV bytes if an audio stream is present, or None if video is silent/unsupported.
+        """
+        try:
+            import torchaudio
+            import scipy.io.wavfile as wavfile
+            waveform, sr = torchaudio.load(video_path)
+            if waveform is not None and waveform.numel() > 0:
+                mono = waveform.mean(dim=0).cpu().numpy()
+                bio = io.BytesIO()
+                scaled = np.clip(mono, -1.0, 1.0) * 32767.0
+                wavfile.write(bio, int(sr), scaled.astype(np.int16))
+                return bio.getvalue()
+        except Exception as e:
+            logger.debug(f"Video audio stream extraction skipped or not present: {e}")
+        return None
 
     async def analyze_video_bytes(
         self,
@@ -56,10 +78,52 @@ class VideoAnalysisService:
             vid_mime = "video/quicktime" if original_filename.lower().endswith(".mov") else "video/mp4"
             provenance_check = ProvenanceVerifier.verify(video_bytes, original_filename, vid_mime)
 
-            # 4. Synthesize assessment label and grounded summary
-            label, score, semantics, summary = self._synthesize_assessment(
-                forensics_output, model_output, original_filename
+            # 3b. Optional independent audio track inspection
+            audio_track_analysis = None
+            audio_bytes = self._extract_audio_track(temp_file_path)
+            if audio_bytes:
+                try:
+                    from app.detectors.audio.service import AudioAnalysisService
+                    audio_service = AudioAnalysisService()
+                    audio_track_analysis = await audio_service.analyze_audio_bytes(
+                        audio_bytes=audio_bytes,
+                        original_filename=f"{original_filename}_audio.wav",
+                        sha256=f"{sha256[:12]}_aud",
+                    )
+                except Exception as e:
+                    logger.warning(f"Video audio track analysis encountered an error: {e}")
+
+            # 4. Synthesize evidence, structured explanation, and grounded verdict
+            synth_res = EvidenceSynthesizer.synthesize_video_analysis(
+                forensics_output=forensics_output,
+                model_output=model_output,
+                provenance_data=provenance_check,
+                filename=original_filename,
+                audio_track_output=audio_track_analysis,
             )
+
+            verdict = synth_res["verdict"]
+            verdict_status = synth_res["verdict_status"]
+            explanation = synth_res["explanation"]
+            evidence_records = synth_res["evidence_records"]
+            supporting_evidence = synth_res["supporting_evidence"]
+            conflicting_evidence = synth_res["conflicting_evidence"]
+            neutral_evidence = synth_res["neutral_evidence"]
+            unavailable_evidence = synth_res["unavailable_evidence"]
+
+            # Backward-compatible assessment_label mapping
+            if verdict == "LIKELY AI-GENERATED":
+                label = "suspicious"
+            elif verdict == "LIKELY REAL":
+                label = "no_strong_indicators"
+            elif verdict == "LIKELY MANIPULATED":
+                label = "suspicious"
+            else:
+                label = "inconclusive"
+
+            score = model_output.score if (model_output.status == DetectorStatus.COMPLETED and model_output.score is not None) else forensics_output.score
+            semantics = "calibrated_probability" if (model_output.status == DetectorStatus.COMPLETED and model_output.score is not None) else "anomaly_index"
+            summary = explanation["summary"]
 
             # 5. Extract duration and spatial dimensions if available
             duration_ms = None
@@ -85,7 +149,33 @@ class VideoAnalysisService:
                 set(forensics_output.limitations + model_output.limitations)
             )
 
+            model_inference_data = (
+                model_output.signals.get("model_inference")
+                if model_output.status == DetectorStatus.COMPLETED
+                else None
+            )
+            forensic_heuristics_data = {
+                "detector_name": forensics_output.detector_name,
+                "score": forensics_output.score,
+                "score_semantics": forensics_output.score_semantics,
+                "signals": forensics_output.signals,
+            }
+            metadata_and_provenance_data = {
+                "provenance_check": provenance_check,
+                "container": forensics_output.signals.get("container", "mp4"),
+                "fourcc": forensics_output.signals.get("fourcc", "unknown"),
+            }
+
             return {
+                "verdict": verdict,
+                "verdict_status": verdict_status,
+                "explanation": explanation,
+                "evidence_records": evidence_records,
+                "supporting_evidence": supporting_evidence,
+                "conflicting_evidence": conflicting_evidence,
+                "neutral_evidence": neutral_evidence,
+                "unavailable_evidence": unavailable_evidence,
+                "video_audio_track": audio_track_analysis,
                 "assessment_label": label,
                 "assessment_score": score,
                 "score_semantics": semantics,
@@ -96,7 +186,13 @@ class VideoAnalysisService:
                 "human_review_recommended": human_review,
                 "detector_results": [forensics_output, model_output],
                 "provenance": provenance_check,
+                "model_inference": model_inference_data,
+                "forensic_heuristics": forensic_heuristics_data,
+                "metadata_and_provenance": metadata_and_provenance_data,
+                "model_version": model_output.detector_version,
+                "calibration_status": model_output.signals.get("calibration_status", "unconfigured"),
                 "limitations_disclosure": all_limitations,
+                "limitations": all_limitations,
             }
 
         finally:

@@ -15,12 +15,14 @@ import {
   ExternalLink,
   Sliders,
   Calendar,
+  Layers,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge, StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Token } from "@/components/ui/token";
 import { Rivet } from "@/components/ui/rivet";
+import { InsetPanel, SectionHeader } from "@/components/ui/panels";
 import { apiClient } from "@/lib/api-client";
 import { AnalysisSummary, HealthResponse } from "@/types/api";
 import { formatDate } from "@/lib/utils";
@@ -29,7 +31,6 @@ export default function DashboardPage() {
   const [analyses, setAnalyses] = useState<AnalysisSummary[]>([]);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUsingSampleData, setIsUsingSampleData] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -46,47 +47,8 @@ export default function DashboardPage() {
           setHealth(healthRes.value);
         }
 
-        if (analysesRes.status === "fulfilled" && analysesRes.value.items.length > 0) {
+        if (analysesRes.status === "fulfilled" && analysesRes.value.items) {
           setAnalyses(analysesRes.value.items);
-          setIsUsingSampleData(false);
-        } else {
-          // Explicitly labeled initial milestone sample data
-          setIsUsingSampleData(true);
-          setAnalyses([
-            {
-              analysis_id: "demo-sample-01",
-              upload_id: "upload-demo-01",
-              filename: "sample_diffusion_portrait.png",
-              media_type: "image",
-              status: "completed",
-              assessment_label: "likely_synthetic",
-              assessment_score: 0.88,
-              score_semantics: "calibrated_probability",
-              created_at: new Date(Date.now() - 3600000).toISOString(),
-            },
-            {
-              analysis_id: "demo-sample-02",
-              upload_id: "upload-demo-02",
-              filename: "voice_clone_statement.wav",
-              media_type: "audio",
-              status: "detector_not_configured",
-              assessment_label: null,
-              assessment_score: null,
-              score_semantics: null,
-              created_at: new Date(Date.now() - 7200000).toISOString(),
-            },
-            {
-              analysis_id: "demo-sample-03",
-              upload_id: "upload-demo-03",
-              filename: "press_briefing_clip.mp4",
-              media_type: "video",
-              status: "queued",
-              assessment_label: null,
-              assessment_score: null,
-              score_semantics: null,
-              created_at: new Date(Date.now() - 10800000).toISOString(),
-            },
-          ]);
         }
       } catch {
         // Handled gracefully
@@ -110,47 +72,34 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner / Welcome Plaque */}
+      {/* Top Banner / Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b-2 border-[#B58A4C]/60">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F0DDB8] tracking-tight drop-shadow-[0_1px_2px_rgba(18,11,7,0.8)]">
-            Forensic Workstation Console
+            Forensic Intelligence Dashboard
           </h1>
-          <p className="text-xs sm:text-sm text-[#D8B98A]">
-            Real-time multi-modal synthetic media verification & artifact analysis.
+          <p className="text-xs sm:text-sm text-[#D8B98A] mt-0.5">
+            Real-time multi-modal synthetic media verification and artifact inspection.
           </p>
         </div>
 
         {/* Date Plaque with Corner Screws */}
-        <div className="relative self-start sm:self-auto px-4 py-2 rounded-xl bg-gradient-to-b from-[#3B281A] to-[#24170F] border border-[#B58A4C] shadow-[0_3px_8px_rgba(18,11,7,0.5),inset_0_1px_0_rgba(229,201,149,0.25)] flex items-center gap-2.5 select-none">
+        <div className="relative self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-gradient-to-b from-[#3B281A] to-[#24170F] border border-[#B58A4C] shadow-[0_3px_8px_rgba(18,11,7,0.5),inset_0_1px_0_rgba(229,201,149,0.25)] flex items-center gap-2.5 select-none">
           <Rivet size="sm" rotation={15} />
-          <Calendar className="w-4 h-4 text-[#E5C995]" />
-          <div className="text-xs font-bold text-[#F0DDB8] font-mono">
+          <Calendar className="w-3.5 h-3.5 text-[#E5C995]" />
+          <span suppressHydrationWarning className="text-xs font-bold text-[#F0DDB8] font-mono">
             {new Date().toLocaleDateString("en-US", {
               weekday: "short",
               day: "numeric",
               month: "short",
               year: "numeric",
             })}
-          </div>
+          </span>
           <Rivet size="sm" rotation={85} />
         </div>
       </div>
 
-      {/* Sample Data Notice */}
-      {isUsingSampleData && (
-        <div className="p-3.5 rounded-xl skeuo-recessed border border-[#B58A4C]/70 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2.5 text-[#664830]">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#C97A24] shadow-[0_0_8px_#C97A24]" />
-            <span>
-              <strong className="text-[#24170F]">Forensic Telemetry:</strong> Displaying representative milestone sample records. Real file uploads stream to PostgreSQL & MinIO storage.
-            </span>
-          </div>
-          <Badge variant="warning">Sample Demonstration Records</Badge>
-        </div>
-      )}
-
-      {/* 4 Rustic Skeuomorphic KPI Cards */}
+      {/* 4 Wooden Skeuomorphic KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Ingested */}
         <Card hoverEffect>
@@ -159,18 +108,18 @@ export default function DashboardPage() {
               <ScanEye className="w-5 h-5 text-white" />
             </Token>
             <div>
-              <span className="text-[11px] font-bold text-[#664830] uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-[#604A34] uppercase tracking-wider block">
                 Total Ingested
               </span>
               <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-2xl font-black font-mono text-[#24170F]">
+                <span className="text-2xl font-black font-mono text-[#302013]">
                   {totalAnalyses}
                 </span>
-                <span className="text-[11px] text-[#664830] font-medium">assets</span>
+                <span className="text-[11px] text-[#604A34] font-medium">assets</span>
               </div>
             </div>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#664830]">
+          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#604A34]">
             <span>Forensic Sessions</span>
             <span className="font-semibold text-[#28734A]">Verified</span>
           </div>
@@ -183,20 +132,20 @@ export default function DashboardPage() {
               <AlertTriangle className="w-5 h-5 text-white" />
             </Token>
             <div>
-              <span className="text-[11px] font-bold text-[#664830] uppercase tracking-wider block">
-                Flagged For Review
+              <span className="text-[11px] font-bold text-[#604A34] uppercase tracking-wider block">
+                Flagged for Review
               </span>
               <div className="flex items-baseline gap-1.5 mt-0.5">
                 <span className="text-2xl font-black font-mono text-[#C97A24]">
                   {reviewNeededCount}
                 </span>
-                <span className="text-[11px] text-[#664830] font-medium">findings</span>
+                <span className="text-[11px] text-[#604A34] font-medium">findings</span>
               </div>
             </div>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#664830]">
+          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#604A34]">
             <span>Synthetic Anomaly</span>
-            <span className="font-semibold text-[#C97A24]">Human Audit Advised</span>
+            <span className="font-semibold text-[#C97A24]">Analyst Audit Advised</span>
           </div>
         </Card>
 
@@ -207,10 +156,10 @@ export default function DashboardPage() {
               <Cpu className="w-5 h-5 text-white" />
             </Token>
             <div>
-              <span className="text-[11px] font-bold text-[#664830] uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-[#604A34] uppercase tracking-wider block">
                 Modal Distribution
               </span>
-              <div className="flex items-center gap-2 mt-1 text-xs font-mono font-bold text-[#24170F]">
+              <div className="flex items-center gap-2 mt-1 text-xs font-mono font-bold text-[#302013]">
                 <span className="flex items-center gap-1">
                   <ImageIcon className="w-3.5 h-3.5 text-[#28734A]" /> {imageCount}
                 </span>
@@ -225,9 +174,9 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#664830]">
-            <span>Spectrum Analyzers</span>
-            <span className="font-semibold text-[#245C88]">3 Modalities</span>
+          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#604A34]">
+            <span>Spectrum Channels</span>
+            <span className="font-semibold text-[#245C88]">Image / Audio / Video</span>
           </div>
         </Card>
 
@@ -238,8 +187,8 @@ export default function DashboardPage() {
               <ShieldCheck className="w-5 h-5 text-white" />
             </Token>
             <div>
-              <span className="text-[11px] font-bold text-[#664830] uppercase tracking-wider block">
-                Integrity Guard
+              <span className="text-[11px] font-bold text-[#604A34] uppercase tracking-wider block">
+                Integrity Standard
               </span>
               <div className="flex items-baseline gap-1.5 mt-0.5">
                 <span className="text-xl font-black text-[#28734A]">
@@ -248,14 +197,14 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#664830]">
-            <span>Audit Standard</span>
-            <span className="font-semibold text-[#28734A]">Zero-Hallucination</span>
+          <div className="mt-3 pt-2.5 border-t border-[#B58A4C]/35 flex items-center justify-between text-[11px] text-[#604A34]">
+            <span>Audit Level</span>
+            <span className="font-semibold text-[#28734A]">Deterministic Limits</span>
           </div>
         </Card>
       </div>
 
-      {/* Main Section: Recent Analyses & Detector Stack Matrix */}
+      {/* Main Section: Recent Analyses & Detector Readiness */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Analyses Instrument Console */}
         <div className="lg:col-span-2 space-y-4">
@@ -264,30 +213,34 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-[#E5C995]" />
                 <h3 className="text-sm font-bold text-[#F0DDB8] tracking-wide drop-shadow-[0_1px_1px_rgba(18,11,7,0.8)]">
-                  Recent Forensic Analyses
+                  Recent Case Analyses
                 </h3>
               </div>
               <Link
                 href="/analyses"
                 className="text-xs font-semibold text-[#E5C995] hover:text-[#F0DDB8] flex items-center gap-1 transition-colors drop-shadow-[0_1px_1px_rgba(18,11,7,0.8)]"
               >
-                <span>View Full Archive</span>
+                <span>View All Cases</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
             {/* List / Table Area */}
             <div className="p-3 space-y-2.5">
-              {analyses.length === 0 ? (
+              {isLoading ? (
+                <div className="skeuo-plate text-center py-12 text-xs font-mono text-[#604A34]">
+                  Loading recent evidence records...
+                </div>
+              ) : analyses.length === 0 ? (
                 <div className="skeuo-plate text-center py-12 p-6">
-                  <ScanEye className="w-10 h-10 text-[#664830] mx-auto mb-2" />
-                  <p className="text-sm font-bold text-[#24170F]">No analyses recorded</p>
-                  <p className="text-xs text-[#664830] mt-1">
-                    Upload an image, audio, or video file to start forensic analysis.
+                  <ScanEye className="w-10 h-10 text-[#604A34] mx-auto mb-2" />
+                  <p className="text-sm font-bold text-[#302013]">No analyses recorded yet</p>
+                  <p className="text-xs text-[#604A34] mt-1">
+                    Upload an image, audio, or video file to begin forensic pipeline processing.
                   </p>
                   <Link href="/analyze" className="mt-4 inline-block">
                     <Button variant="parchment" size="sm">
-                      Start First Analysis
+                      Analyze First Asset
                     </Button>
                   </Link>
                 </div>
@@ -312,13 +265,13 @@ export default function DashboardPage() {
 
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-[#24170F] truncate max-w-xs">
+                          <span className="text-sm font-bold text-[#302013] truncate max-w-xs">
                             {item.filename}
                           </span>
-                          <Badge status={item.status} />
+                          <StatusBadge status={item.status} />
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-[#664830] mt-1 font-mono">
-                          <span>ID: {item.analysis_id.slice(0, 12)}...</span>
+                        <div className="flex items-center gap-3 text-xs text-[#604A34] mt-1 font-mono">
+                          <span>Case ID: {item.analysis_id.slice(0, 10)}...</span>
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" /> {formatDate(item.created_at)}
@@ -330,17 +283,17 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
                       {item.assessment_score !== null && item.assessment_score !== undefined ? (
                         <div className="text-right">
-                          <div className="text-xs font-mono font-black text-[#24170F]">
+                          <div className="text-xs font-mono font-black text-[#302013]">
                             {(item.assessment_score * 100).toFixed(0)}% Score
                           </div>
-                          <div className="text-[10px] text-[#664830] font-medium">
-                            Calibrated Prob.
+                          <div className="text-[10px] text-[#604A34] font-medium">
+                            Calibrated
                           </div>
                         </div>
                       ) : (
-                        <span className="text-xs text-[#664830] font-mono">
+                        <span className="text-xs text-[#604A34] font-mono">
                           {item.status === "detector_not_configured"
-                            ? "Adapter Unconfigured"
+                            ? "Unconfigured"
                             : "Pending"}
                         </span>
                       )}
@@ -358,15 +311,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Detector Telemetry Matrix & Quick Action */}
+        {/* Right Column: Real Detector Stack Readiness & Quick Ingest */}
         <div className="space-y-4">
           <Card rivets={true}>
             <div className="pb-3 border-b border-[#B58A4C]/35 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-[#24170F] tracking-tight">
-                  Detector Stack Telemetry
+                <h3 className="text-sm font-bold text-[#302013] tracking-tight">
+                  Detector Stack Readiness
                 </h3>
-                <p className="text-xs text-[#664830]">Honest integration matrix</p>
+                <p className="text-xs text-[#604A34]">Live backend telemetry</p>
               </div>
               <Link
                 href="/settings"
@@ -385,15 +338,15 @@ export default function DashboardPage() {
                     <ImageIcon className="w-3.5 h-3.5 text-[#28734A]" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[#24170F]">
-                      Image Artifact Detector
+                    <div className="text-xs font-bold text-[#302013]">
+                      Image Forensics
                     </div>
-                    <div className="text-[10px] text-[#664830] font-mono">
+                    <div className="text-[10px] text-[#604A34] font-mono">
                       spectral_frequency_v1
                     </div>
                   </div>
                 </div>
-                <Badge variant="success">Available</Badge>
+                <StatusBadge status={health?.services?.detectors?.image || "not_configured"} />
               </div>
 
               {/* Audio Detector */}
@@ -403,15 +356,15 @@ export default function DashboardPage() {
                     <Mic className="w-3.5 h-3.5 text-[#C97A24]" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[#24170F]">
-                      Voice Clone & Audio
+                    <div className="text-xs font-bold text-[#302013]">
+                      Audio & Voice
                     </div>
-                    <div className="text-[10px] text-[#664830] font-mono">
-                      vocoder_spectral_v1
+                    <div className="text-[10px] text-[#604A34] font-mono">
+                      audio_forensics_v1
                     </div>
                   </div>
                 </div>
-                <Badge variant="info">Milestone 5</Badge>
+                <StatusBadge status={health?.services?.detectors?.audio || "not_configured"} />
               </div>
 
               {/* Video Detector */}
@@ -421,15 +374,15 @@ export default function DashboardPage() {
                     <Video className="w-3.5 h-3.5 text-[#245C88]" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[#24170F]">
-                      Video Frame & Temporal
+                    <div className="text-xs font-bold text-[#302013]">
+                      Video & Temporal
                     </div>
-                    <div className="text-[10px] text-[#664830] font-mono">
-                      ffmpeg_temporal_v1
+                    <div className="text-[10px] text-[#604A34] font-mono">
+                      video_forensics_v1
                     </div>
                   </div>
                 </div>
-                <Badge variant="info">Milestone 6</Badge>
+                <StatusBadge status={health?.services?.detectors?.video || "not_configured"} />
               </div>
 
               {/* C2PA Provenance */}
@@ -439,22 +392,21 @@ export default function DashboardPage() {
                     <ShieldCheck className="w-3.5 h-3.5 text-[#28734A]" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[#24170F]">
+                    <div className="text-xs font-bold text-[#302013]">
                       Content Credentials (C2PA)
                     </div>
-                    <div className="text-[10px] text-[#664830] font-mono">
+                    <div className="text-[10px] text-[#604A34] font-mono">
                       metadata_provenance_v1
                     </div>
                   </div>
                 </div>
-                <Badge variant="info">Milestone 7</Badge>
+                <StatusBadge status={health?.services?.detectors?.provenance || "available"} />
               </div>
             </div>
 
-            {/* Disclaimer Plaque */}
-            <div className="mt-4 p-3 rounded-lg skeuo-recessed text-xs text-[#664830] leading-relaxed">
-              <strong className="text-[#24170F]">Forensic Rule:</strong> Inactive
-              detectors yield explicit <code className="text-[#173D2D] font-bold font-mono text-[11px] bg-[#F0DDB8] px-1 py-0.5 rounded border border-[#B58A4C]">detector_not_configured</code>. OmniScan never simulates mock predictions.
+            {/* Note */}
+            <div className="mt-4 p-3 rounded-lg skeuo-recessed text-xs text-[#604A34] leading-relaxed border border-[#B58A4C]/60">
+              Unconfigured detectors return honest explicit status and do not output synthetic scores.
             </div>
           </Card>
 
@@ -462,15 +414,15 @@ export default function DashboardPage() {
           <div className="skeuo-card p-2 text-center select-none">
             <div className="bg-gradient-to-b from-[#3B281A] to-[#24170F] p-4 rounded-xl border border-[#B58A4C] shadow-[inset_0_1px_0_rgba(229,201,149,0.25)] space-y-3">
               <h4 className="text-sm font-bold text-[#F0DDB8]">
-                Launch Media Analysis
+                Analyze New Media Asset
               </h4>
               <p className="text-xs text-[#D8B98A] leading-relaxed">
-                Upload image, audio, or video files to compute SHA-256 digests and trigger forensic pipeline adapters.
+                Ingest image, audio, or video files for magic byte validation and cryptographic fingerprinting.
               </p>
               <Link href="/analyze" className="block w-full">
                 <Button variant="primary" className="w-full gap-2">
                   <ScanEye className="w-4 h-4 text-[#E5C995]" />
-                  <span>Open Media Analyzer</span>
+                  <span>Open Ingestion Bay</span>
                 </Button>
               </Link>
             </div>

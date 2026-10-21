@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "parchment" | "secondary" | "outline" | "ghost" | "danger";
+  variant?: "primary" | "brass" | "parchment" | "secondary" | "wood" | "outline" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
 }
@@ -21,18 +21,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-semibold select-none rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B58A4C]/60 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
+      "inline-flex items-center justify-center font-bold select-none rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B58A4C]/60 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all duration-100 tracking-wide";
 
     const variants = {
       primary: "skeuo-button-forest",
+      brass: "skeuo-button-brass",
       parchment: "skeuo-button-parchment",
       secondary: "skeuo-button-wood",
+      wood: "skeuo-button-wood",
       outline:
-        "bg-[#3B281A] text-[#F0DDB8] border border-[#B58A4C] shadow-[0_2px_4px_rgba(24,15,10,0.4),inset_0_1px_0_rgba(229,201,149,0.2)] hover:bg-[#4A3321] hover:border-[#E5C995] active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(24,15,10,0.7)]",
+        "bg-[#3B281A] text-[#F0DDB8] border border-[#B58A4C] shadow-[0_2px_4px_rgba(24,15,10,0.4),inset_0_1px_0_rgba(229,201,149,0.25)] hover:bg-[#4A3321] hover:border-[#E5C995] active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(24,15,10,0.7)]",
       ghost:
-        "text-[#664830] hover:text-[#24170F] hover:bg-[#B58A4C]/15 active:translate-y-[0.5px]",
-      danger:
-        "bg-gradient-to-b from-[#C43E32] to-[#A9362B] text-[#FFF5F5] border border-[#7A241B] shadow-[0_3px_6px_rgba(24,15,10,0.45),inset_0_1px_0_rgba(255,180,180,0.35)] hover:brightness-110 active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(24,15,10,0.8)]",
+        "text-[#604A34] hover:text-[#302013] hover:bg-[#B58A4C]/15 active:translate-y-[0.5px]",
+      danger: "skeuo-button-danger",
     };
 
     const sizes = {
@@ -50,7 +51,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading && (
           <svg
-            className="animate-spin -ml-0.5 h-4 w-4 text-current"
+            className="animate-spin -ml-0.5 h-3.5 w-3.5 text-current shrink-0"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -77,3 +78,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
+
+export const BrassButton = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => (
+  <Button ref={ref} variant="brass" {...props} />
+));
+BrassButton.displayName = "BrassButton";

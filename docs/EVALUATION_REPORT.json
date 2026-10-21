@@ -1,0 +1,104 @@
+{
+  "model_architecture": "efficientnet_b0",
+  "checkpoint_path": "C:\\Users\\sr090\\OneDrive\\Desktop\\OMNI SCAN\\services\\api\\training\\checkpoints\\best_model.pt",
+  "checkpoint_sha256": "14f95af0f2fa39f98f9aa0150000186ed0a3b34b4a1b717343ad9351fbdccc04",
+  "evaluation_timestamp": "2026-10-20T19:19:11Z",
+  "hardware": {
+    "device": "cpu",
+    "torch_version": "2.14.1+cpu"
+  },
+  "calibration": {
+    "tuning_split": "val",
+    "tuning_objective": "max_f1_score",
+    "calibrated_operating_threshold": 0.37,
+    "val_f1_at_calibrated_threshold": 0.9356,
+    "val_accuracy": 0.9325
+  },
+  "independent_test_split_results": {
+    "sample_count": 399,
+    "threshold": 0.37,
+    "accuracy": 0.9474,
+    "precision": 0.9238,
+    "recall": 0.9749,
+    "f1_score": 0.9487,
+    "roc_auc": 0.9873,
+    "confusion_matrix": {
+      "true_negatives": 184,
+      "false_positives": 16,
+      "false_negatives": 5,
+      "true_positives": 194
+    },
+    "false_positive_rate": 0.08,
+    "false_negative_rate": 0.0251,
+    "expected_calibration_error": 0.0282,
+    "brier_score": 0.0368,
+    "per_generator_metrics": {
+      "Camera_Natural": {
+        "samples": 200,
+        "accuracy": 0.92,
+        "mean_synthetic_prob": 0.0909
+      },
+      "StableDiffusion_v1.4": {
+        "samples": 199,
+        "accuracy": 0.9749,
+        "mean_synthetic_prob": 0.9206
+      }
+    }
+  },
+  "generator_held_out_results": {
+    "sample_count": 199,
+    "threshold": 0.37,
+    "accuracy": 0.9296,
+    "precision": 0.8829,
+    "recall": 0.9899,
+    "f1_score": 0.9333,
+    "roc_auc": 0.9793,
+    "confusion_matrix": {
+      "true_negatives": 87,
+      "false_positives": 13,
+      "false_negatives": 1,
+      "true_positives": 98
+    },
+    "false_positive_rate": 0.13,
+    "false_negative_rate": 0.0101,
+    "expected_calibration_error": 0.0438,
+    "brier_score": 0.049,
+    "per_generator_metrics": {
+      "Camera_Natural": {
+        "samples": 100,
+        "accuracy": 0.87,
+        "mean_synthetic_prob": 0.121
+      },
+      "StableDiffusion_HeldOut": {
+        "samples": 99,
+        "accuracy": 0.9899,
+        "mean_synthetic_prob": 0.9208
+      }
+    }
+  },
+  "robustness_benchmarks": {
+    "jpeg_compression_q70": {
+      "accuracy": 0.9273,
+      "f1": 0.9301,
+      "roc_auc": 0.9863
+    },
+    "jpeg_compression_q50": {
+      "accuracy": 0.8847,
+      "f1": 0.8935,
+      "roc_auc": 0.971
+    },
+    "downscale_128px": {
+      "accuracy": 0.9023,
+      "f1": 0.8932,
+      "roc_auc": 0.986
+    }
+  },
+  "inference_latency": {
+    "device": "cpu",
+    "iterations": 100,
+    "mean_latency_ms": 45.29,
+    "median_latency_ms": 43.26,
+    "p95_latency_ms": 62.85,
+    "throughput_fps": 22.1
+  }
+}

@@ -5,6 +5,7 @@ import aiofiles
 
 from app.core.logging import logger
 from app.detectors.base import DetectorOutput
+from app.detectors.evidence_synthesizer import EvidenceSynthesizer
 from app.detectors.image.detector import ImageForensicsDetector
 from app.detectors.image.model_adapter import PretrainedImageModelAdapter
 from app.provenance.service import ProvenanceVerifier
@@ -58,18 +59,79 @@ class ImageAnalysisService:
             img_mime = "image/jpeg" if original_filename.lower().endswith((".jpg", ".jpeg")) else "image/png"
             provenance_check = ProvenanceVerifier.verify(image_bytes, original_filename, img_mime)
 
-            # 4. Formulate evidence-grounded summary and assessment label
-            assessment_label, assessment_score, score_semantics, summary = (
-                self._synthesize_assessment(forensics_output, model_output, original_filename)
+            # 4. Synthesize evidence, structured explanation, and grounded verdict
+            synth_res = EvidenceSynthesizer.synthesize_image_analysis(
+                forensics_output=forensics_output,
+                model_output=model_output,
+                provenance_data=provenance_check,
+                filename=original_filename,
             )
 
+            verdict = synth_res["verdict"]
+            verdict_status = synth_res["verdict_status"]
+            explanation = synth_res["explanation"]
+            evidence_records = synth_res["evidence_records"]
+            supporting_evidence = synth_res["supporting_evidence"]
+            conflicting_evidence = synth_res["conflicting_evidence"]
+            neutral_evidence = synth_res["neutral_evidence"]
+            unavailable_evidence = synth_res["unavailable_evidence"]
+
+            # Backward-compatible assessment_label mapping
+            if verdict == "LIKELY AI-GENERATED":
+                assessment_label = "suspicious"
+            elif verdict == "LIKELY REAL":
+                assessment_label = "no_strong_indicators"
+            elif verdict == "LIKELY MANIPULATED":
+                assessment_label = "suspicious"
+            else:
+                assessment_label = "inconclusive"
+
+            assessment_score = model_output.score if (model_output.status == DetectorStatus.COMPLETED and model_output.score is not None) else forensics_output.score
+            score_semantics = "calibrated_probability" if (model_output.status == DetectorStatus.COMPLETED and model_output.score is not None) else "anomaly_index"
+            summary = explanation["summary"]
+
+            # 5. Extract structured forensic blocks
+            model_inference_data = (
+                model_output.signals.get("model_inference")
+                if model_output.status == DetectorStatus.COMPLETED
+                else None
+            )
+            forensic_heuristics_data = {
+                "detector_name": forensics_output.detector_name,
+                "score": forensics_output.score,
+                "score_semantics": forensics_output.score_semantics,
+                "signals": forensics_output.signals,
+            }
+            metadata_and_provenance_data = {
+                "provenance_check": provenance_check,
+                "exif_metadata": forensics_output.signals.get("has_exif", False),
+                "software_signature": forensics_output.signals.get("software_signature", "None detected"),
+            }
+
+            all_limitations = list(set(forensics_output.limitations + model_output.limitations))
+
             return {
+                "verdict": verdict,
+                "verdict_status": verdict_status,
+                "explanation": explanation,
+                "evidence_records": evidence_records,
+                "supporting_evidence": supporting_evidence,
+                "conflicting_evidence": conflicting_evidence,
+                "neutral_evidence": neutral_evidence,
+                "unavailable_evidence": unavailable_evidence,
                 "assessment_label": assessment_label,
                 "assessment_score": assessment_score,
                 "score_semantics": score_semantics,
                 "summary": summary,
                 "detector_results": [forensics_output, model_output],
                 "provenance": provenance_check,
+                "model_inference": model_inference_data,
+                "forensic_heuristics": forensic_heuristics_data,
+                "metadata_and_provenance": metadata_and_provenance_data,
+                "model_version": model_output.detector_version,
+                "calibration_status": model_output.signals.get("calibration_status", "unconfigured"),
+                "evaluation_reference": model_output.signals.get("evaluation_reference", "docs/EVALUATION_REPORT.md"),
+                "limitations": all_limitations,
                 "human_review_recommended": bool(assessment_label in ("suspicious", "inconclusive")),
             }
 
@@ -105,9 +167,10 @@ class ImageAnalysisService:
         # If a real model is configured and completed, combine model output with forensic features
         if model.status == DetectorStatus.COMPLETED and model.score is not None:
             model_score = model.score
-            if model_score > 0.70 or len(indicators) >= 2:
+            cal_threshold = model.signals.get("calibrated_threshold", 0.37)
+            if model_score >= cal_threshold or len(indicators) >= 2:
                 label = "suspicious"
-            elif model_score < 0.30 and len(indicators) == 0:
+            elif model_score < (cal_threshold * 0.6) and len(indicators) == 0:
                 label = "no_strong_indicators"
             else:
                 label = "inconclusive"

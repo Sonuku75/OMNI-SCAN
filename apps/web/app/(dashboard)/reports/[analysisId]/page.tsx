@@ -148,6 +148,27 @@ export default function ReportPage({
             </div>
           </div>
 
+          {/* Primary Forensic Assessment Verdict */}
+          <div className="p-4 rounded-xl skeuo-recessed border border-[#B58A4C] print:bg-gray-100 print:border-gray-400 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#604A34] print:text-gray-600 font-bold block mb-1">
+                Primary Evidentiary Determination
+              </span>
+              <div className="text-xl sm:text-2xl font-black font-mono tracking-wide text-[#302013] print:text-black">
+                {report.verdict || (report.assessment_label === "suspicious" ? "LIKELY AI-GENERATED" : report.assessment_label === "no_strong_indicators" ? "LIKELY REAL" : "INCONCLUSIVE")}
+              </div>
+            </div>
+            {typeof report.assessment_score === "number" && (
+              <div className="text-left sm:text-right font-mono text-xs">
+                <span className="text-[#604A34] print:text-gray-600 block text-[10px] uppercase font-bold">Calibrated Score</span>
+                <span className="text-xl font-black text-[#302013] print:text-black">
+                  {(report.assessment_score * 100).toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-[#604A34] print:text-gray-600 block">Threshold: τ* = 0.370</span>
+              </div>
+            )}
+          </div>
+
           {/* Section 1: Media Asset Telemetry */}
           <div>
             <h2 className="text-xs font-black uppercase tracking-wider text-[#173D2D] print:text-gray-800 font-mono mb-2">
@@ -238,6 +259,86 @@ export default function ReportPage({
             </div>
           </div>
 
+          {/* Section 5: Learned Neural Model Telemetry & Calibration */}
+          {report.model_inference && (
+            <div>
+              <h2 className="text-xs font-black uppercase tracking-wider text-[#173D2D] print:text-gray-800 font-mono mb-2">
+                5. Learned Neural Inference & Calibration Telemetry
+              </h2>
+              <div className="skeuo-recessed p-4 rounded-xl print:bg-gray-50 print:border print:border-gray-300 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono border border-[#B58A4C]/60">
+                <div>
+                  <span className="text-[#604A34] print:text-gray-600 block text-[10px] uppercase font-bold">Architecture</span>
+                  <span className="font-extrabold text-[#302013] print:text-black">
+                    {String(report.model_inference.architecture || "EfficientNet-B0")}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#604A34] print:text-gray-600 block text-[10px] uppercase font-bold">Prediction</span>
+                  <span className="font-extrabold text-[#302013] uppercase print:text-black">
+                    {String(report.model_inference.prediction || "UNKNOWN")}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#604A34] print:text-gray-600 block text-[10px] uppercase font-bold">Synthetic Prob</span>
+                  <span className="font-extrabold text-[#8B2C24] print:text-black">
+                    {typeof report.model_inference.synthetic_probability === "number"
+                      ? `${(report.model_inference.synthetic_probability * 100).toFixed(1)}%`
+                      : "N/A"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#604A34] print:text-gray-600 block text-[10px] uppercase font-bold">Threshold (τ*)</span>
+                  <span className="font-extrabold text-[#302013] print:text-black">
+                    {typeof report.model_inference.calibrated_threshold === "number"
+                      ? report.model_inference.calibrated_threshold.toFixed(3)
+                      : "0.370"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#604A34] print:text-gray-600 block text-[10px] uppercase font-bold">Model Version</span>
+                  <span className="font-extrabold text-[#302013] print:text-black">
+                    v{report.model_version || "1.1.0"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#604A34] print:text-gray-600 block text-[10px] uppercase font-bold">Calibration Status</span>
+                  <span className="font-extrabold text-[#302013] print:text-black truncate block">
+                    {report.calibration_status || "calibrated_val_max_f1"}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-[#604A34] print:text-gray-600 block text-[10px] uppercase font-bold">Evaluation Reference</span>
+                  <span className="font-extrabold text-[#302013] print:text-black truncate block">
+                    {report.evaluation_reference || "docs/EVALUATION_REPORT.md"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 6: Multi-Track Analysis (Video vs Audio) */}
+          {report.video_audio_track && (
+            <div>
+              <h2 className="text-xs font-black uppercase tracking-wider text-[#173D2D] print:text-gray-800 font-mono mb-2">
+                6. Multi-Modal Stream Correlation (Keyframes vs. Audio Track)
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+                <div className="skeuo-recessed p-3.5 rounded-xl print:bg-gray-50 border border-[#B58A4C]/60">
+                  <span className="font-bold text-[#302013] print:text-black block mb-1">Visual Stream Keyframes</span>
+                  <p className="text-[#604A34] print:text-gray-600 font-sans text-xs">
+                    Uniform temporal sampling across video stream with 2D FFT and optical flow motion vector tracking.
+                  </p>
+                </div>
+                <div className="skeuo-recessed p-3.5 rounded-xl print:bg-gray-50 border border-[#B58A4C]/60">
+                  <span className="font-bold text-[#302013] print:text-black block mb-1">Extracted Audio Track</span>
+                  <p className="text-[#604A34] print:text-gray-600 font-sans text-xs">
+                    {String(report.video_audio_track.summary || "Audio stream inspected for vocoder artifacts and dynamic crest factor.")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Human Review Recommendation */}
           {report.human_review_recommended && (
             <div className="p-4 rounded-xl bg-gradient-to-r from-[#8C5214]/25 to-[#63390B]/25 border border-[#B58A4C] text-[#24170F] text-xs flex items-start gap-3 print:bg-yellow-50 print:text-yellow-900 print:border-yellow-300">
@@ -247,6 +348,29 @@ export default function ReportPage({
                 <span className="leading-relaxed text-[#664830]">
                   Automated models detected algorithmic anomalies. Final determinations must be corroborated by a qualified media forensics analyst.
                 </span>
+              </div>
+            </div>
+          )}
+
+          {/* Section 6: Multi-Track Analysis (Video vs Audio) */}
+          {report.video_audio_track && (
+            <div>
+              <h2 className="text-xs font-black uppercase tracking-wider text-[#173D2D] print:text-gray-800 font-mono mb-2">
+                6. Multi-Modal Stream Correlation (Keyframes vs. Audio Track)
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+                <div className="skeuo-recessed p-3.5 rounded-xl print:bg-gray-50 border border-[#B58A4C]/60">
+                  <span className="font-bold text-[#302013] print:text-black block mb-1">Visual Stream Keyframes</span>
+                  <p className="text-[#604A34] print:text-gray-600 font-sans text-xs">
+                    Uniform temporal sampling across video stream with 2D FFT and optical flow motion vector tracking.
+                  </p>
+                </div>
+                <div className="skeuo-recessed p-3.5 rounded-xl print:bg-gray-50 border border-[#B58A4C]/60">
+                  <span className="font-bold text-[#302013] print:text-black block mb-1">Extracted Audio Track</span>
+                  <p className="text-[#604A34] print:text-gray-600 font-sans text-xs">
+                    {String(report.video_audio_track.summary || "Audio stream inspected for vocoder artifacts and dynamic crest factor.")}
+                  </p>
+                </div>
               </div>
             </div>
           )}

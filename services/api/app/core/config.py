@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     IMAGE_MAX_DIMENSION: int = 8192      # 8192px width/height max
     IMAGE_DETECTOR_ENABLED: bool = True
     IMAGE_MODEL_PATH: Optional[str] = None
-    IMAGE_MODEL_NAME: str = "resnet50_deepfake_v1"
+    IMAGE_MODEL_NAME: str = "efficientnet_b0_deepfake_v1"
     IMAGE_MODEL_DEVICE: str = "cpu"
 
     # Audio Forensic & Voice Clone Model Limits

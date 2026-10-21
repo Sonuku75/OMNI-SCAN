@@ -3,155 +3,322 @@
 @tailwind utilities;
 
 :root {
-  --dark-walnut: #24170F;
+  --walnut-dark: #24170F;
   --walnut-wood: #3B281A;
-  --antique-parchment: #D8B98A;
-  --warm-ivory: #F0DDB8;
-  --antique-brass: #B58A4C;
-  --brass-highlight: #E5C995;
+  --walnut-deep: #160E09;
   --forest-green: #173D2D;
-  --signal-green: #28734A;
-  --steel-blue: #245C88;
-  --alert-red: #A9362B;
-
-  --background: #24170F;
-  --surface: #F0DDB8;
-  --border: #B58A4C;
-  --text: #24170F;
-  --muted: #664830;
-  --primary: #173D2D;
+  --forest-highlight: #315440;
+  --forest-dark: #102B20;
+  --parchment-base: #D8B98A;
+  --parchment-ivory: #F0DDB8;
+  --parchment-light: #FAF1DF;
+  --brass-base: #B58A4C;
+  --brass-highlight: #E5C995;
+  --brass-dark: #7A5B2E;
+  --ink-primary: #302013;
+  --ink-secondary: #604A34;
+  --status-success: #28734A;
+  --status-info: #245C88;
+  --status-error: #A9362B;
 }
 
 body {
   background-color: #24170F;
   background-image: 
-    radial-gradient(ellipse at 50% 0%, rgba(59, 40, 26, 0.45) 0%, transparent 75%),
-    linear-gradient(to bottom, #2A1C12 0%, #1D120B 100%);
-  color: #24170F;
-  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    url('/textures/walnut-wood.svg'),
+    radial-gradient(ellipse at 50% 0%, rgba(74, 52, 35, 0.45) 0%, rgba(18, 11, 7, 0.9) 100%),
+    linear-gradient(180deg, #2E1D13 0%, #160E09 100%);
+  background-blend-mode: overlay, normal, normal;
+  color: #302013;
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* Rustic Vintage Forensic Workstation Skeuomorphic Components */
+/* Material Texture Backdrop Utilities */
+.wood-backdrop {
+  background-color: #24170F;
+  background-image: 
+    url('/textures/walnut-wood.svg'),
+    radial-gradient(ellipse at 50% 10%, rgba(74, 52, 35, 0.5) 0%, rgba(18, 11, 7, 0.9) 100%),
+    linear-gradient(180deg, #3B281A 0%, #24170F 50%, #160E09 100%);
+  background-blend-mode: overlay, normal, normal;
+}
+
+.leather-backdrop {
+  background-color: #173D2D;
+  background-image: 
+    url('/textures/forest-leather.svg'),
+    linear-gradient(180deg, #1F523D 0%, #173D2D 50%, #102B20 100%);
+  background-blend-mode: overlay, normal;
+}
+
+.parchment-backdrop {
+  background-color: #F0DDB8;
+  background-image: 
+    url('/textures/aged-parchment.svg'),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(216, 185, 138, 0.25) 100%);
+  background-blend-mode: multiply, normal;
+}
+
+/* Authentic Wooden Skeuomorphic Workstation Components */
 @layer components {
-  /* Walnut Wood Casing with Antique Brass Borders & Screws */
+  /* Walnut Wood Casing with Antique Brass Borders & Hardware Fixtures */
   .skeuo-card {
-    background: #3B281A;
-    background-image: linear-gradient(180deg, #4A3322 0%, #2E1E13 100%);
+    background-color: #3B281A;
+    background-image: 
+      url('/textures/walnut-wood.svg'),
+      linear-gradient(180deg, #4A3321 0%, #2A1A10 100%);
+    background-blend-mode: overlay, normal;
     border: 1.5px solid #B58A4C;
     border-radius: 12px;
     box-shadow: 
-      0 8px 24px rgba(18, 11, 7, 0.65),
-      0 2px 6px rgba(18, 11, 7, 0.45),
-      inset 0 1px 0 rgba(229, 201, 149, 0.35);
+      0 10px 28px rgba(16, 10, 6, 0.7),
+      0 3px 8px rgba(16, 10, 6, 0.45),
+      inset 0 1px 0 rgba(229, 201, 149, 0.45),
+      inset 0 0 0 1px rgba(74, 52, 33, 0.5);
     position: relative;
   }
 
-  /* Warm Ivory Working Plate */
+  /* Warm Ivory Working Plate (Main readable paper surface) */
   .skeuo-plate {
     background-color: #F0DDB8;
-    background-image: linear-gradient(180deg, #F5E7CC 0%, #E8D3AA 100%);
+    background-image: 
+      url('/textures/aged-parchment.svg'),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(216, 185, 138, 0.25) 100%);
+    background-blend-mode: multiply, normal;
     border: 1px solid #B58A4C;
     border-radius: 8px;
-    color: #24170F;
+    color: #302013;
     box-shadow: 
-      inset 0 1px 3px rgba(59, 40, 26, 0.15),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.5),
-      0 1px 2px rgba(18, 11, 7, 0.2);
+      inset 0 1px 2px rgba(255, 255, 255, 0.85),
+      inset 0 -1px 2px rgba(59, 40, 26, 0.15),
+      0 2px 6px rgba(16, 10, 6, 0.25),
+      0 0 0 1px rgba(240, 221, 184, 0.4);
   }
 
   /* Antique Parchment Deeply Recessed Display Bay */
   .skeuo-recessed {
     background-color: #D8B98A;
-    background-image: linear-gradient(180deg, #CEAC7B 0%, #DEC193 100%);
-    border: 1px solid #A87E42;
+    background-image: 
+      url('/textures/aged-parchment.svg'),
+      linear-gradient(180deg, rgba(36, 23, 15, 0.08) 0%, rgba(36, 23, 15, 0.02) 100%);
+    border: 1.5px solid #A87E42;
+    border-radius: 8px;
+    color: #302013;
+    box-shadow: 
+      inset 0 3px 8px rgba(26, 16, 10, 0.42),
+      inset 0 1px 3px rgba(26, 16, 10, 0.25),
+      0 1px 0 rgba(229, 201, 149, 0.7);
+  }
+
+  /* Deep Recessed Inset Bay for telemetry */
+  .skeuo-recessed-deep {
+    background-color: #C9A775;
+    background-image: 
+      url('/textures/aged-parchment.svg'),
+      linear-gradient(180deg, rgba(26, 16, 10, 0.16) 0%, rgba(26, 16, 10, 0.06) 100%);
+    border: 1.5px solid #9A7238;
     border-radius: 8px;
     color: #24170F;
     box-shadow: 
-      inset 0 3px 6px rgba(36, 23, 15, 0.35),
-      inset 0 1px 2px rgba(36, 23, 15, 0.25),
+      inset 0 5px 12px rgba(16, 10, 6, 0.55),
+      inset 0 2px 4px rgba(16, 10, 6, 0.35),
       0 1px 0 rgba(229, 201, 149, 0.6);
   }
 
-  /* Tactile Warm Ivory Button with Antique Brass Border */
+  /* Deep Forest Green Textured Leather Sidebar */
+  .skeuo-sidebar-leather {
+    background-color: #173D2D;
+    background-image: 
+      url('/textures/forest-leather.svg'),
+      linear-gradient(180deg, #1C4A37 0%, #173D2D 50%, #102B20 100%);
+    background-blend-mode: overlay, normal;
+    border-right: 2px solid #B58A4C;
+    box-shadow: 
+      4px 0 20px rgba(16, 10, 6, 0.65),
+      inset -1px 0 0 rgba(229, 201, 149, 0.3);
+  }
+
+  /* Walnut Wood Top Header */
+  .skeuo-wood-header {
+    background-color: #3B281A;
+    background-image: 
+      url('/textures/walnut-wood.svg'),
+      linear-gradient(180deg, #4A3321 0%, #301E13 100%);
+    background-blend-mode: overlay, normal;
+    border-bottom: 2px solid #B58A4C;
+    box-shadow: 
+      0 4px 16px rgba(16, 10, 6, 0.65),
+      inset 0 1px 0 rgba(229, 201, 149, 0.4);
+  }
+
+  /* Recessed Oscilloscope / Evidence Screen */
+  .skeuo-screen {
+    background-color: #0E1813;
+    background-image: 
+      radial-gradient(circle at 50% 20%, #1A3024 0%, #0B130F 100%),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.4) 2px, rgba(0, 0, 0, 0.4) 4px);
+    border: 2px solid #302014;
+    border-radius: 10px;
+    color: #F0DDB8;
+    box-shadow: 
+      inset 0 5px 16px rgba(0, 0, 0, 0.95),
+      inset 0 0 0 1px rgba(40, 115, 74, 0.4),
+      0 1px 0 rgba(229, 201, 149, 0.45);
+  }
+
+  /* Tactile Raised Forest Green Switch Button */
+  .skeuo-button-forest {
+    background: linear-gradient(180deg, #245E44 0%, #163B2B 100%);
+    border: 1.5px solid #B58A4C;
+    border-radius: 8px;
+    color: #F0DDB8;
+    font-weight: 700;
+    box-shadow: 
+      0 4px 8px rgba(16, 10, 6, 0.45),
+      0 1px 2px rgba(16, 10, 6, 0.3),
+      inset 0 1px 0 rgba(229, 201, 149, 0.5),
+      inset 0 -1px 0 rgba(10, 26, 19, 0.7);
+    transition: all 0.1s ease-in-out;
+  }
+  .skeuo-button-forest:hover {
+    background: linear-gradient(180deg, #2D7454 0%, #1B4734 100%);
+    border-color: #E5C995;
+    box-shadow: 
+      0 6px 14px rgba(23, 61, 45, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+  .skeuo-button-forest:active {
+    transform: translateY(1.5px);
+    background: linear-gradient(180deg, #102B20 0%, #1A4433 100%);
+    box-shadow: 
+      inset 0 3px 6px rgba(0, 0, 0, 0.7),
+      0 1px 0 rgba(229, 201, 149, 0.3);
+  }
+
+  /* Tactile Antique Brass Raised Button */
+  .skeuo-button-brass {
+    background: 
+      url('/textures/brushed-brass.svg'),
+      linear-gradient(180deg, #E5C995 0%, #B58A4C 60%, #8C6527 100%);
+    background-blend-mode: overlay, normal;
+    border: 1.5px solid #7A5B2E;
+    border-radius: 8px;
+    color: #24170F;
+    font-weight: 800;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    box-shadow: 
+      0 4px 8px rgba(16, 10, 6, 0.4),
+      0 1px 2px rgba(16, 10, 6, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 rgba(78, 55, 25, 0.6);
+    transition: all 0.1s ease-in-out;
+  }
+  .skeuo-button-brass:hover {
+    background: 
+      url('/textures/brushed-brass.svg'),
+      linear-gradient(180deg, #FFF0D0 0%, #C99C56 60%, #A37633 100%);
+    background-blend-mode: overlay, normal;
+    border-color: #E5C995;
+    box-shadow: 
+      0 6px 12px rgba(181, 138, 76, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+  .skeuo-button-brass:active {
+    transform: translateY(1.5px);
+    background: 
+      url('/textures/brushed-brass.svg'),
+      linear-gradient(180deg, #9C7232 0%, #B58A4C 100%);
+    background-blend-mode: overlay, normal;
+    box-shadow: 
+      inset 0 3px 6px rgba(48, 32, 19, 0.7),
+      0 1px 0 rgba(229, 201, 149, 0.4);
+  }
+
+  /* Tactile Warm Ivory Button with Brass Border */
   .skeuo-button-parchment {
     background: linear-gradient(180deg, #FAF1DF 0%, #E2CCA1 100%);
     border: 1.5px solid #B58A4C;
     border-radius: 8px;
-    color: #24170F;
+    color: #302013;
     font-weight: 700;
     box-shadow: 
       0 4px 8px rgba(24, 15, 10, 0.35),
       0 1px 2px rgba(24, 15, 10, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(181, 138, 76, 0.4);
     transition: all 0.1s ease-in-out;
   }
   .skeuo-button-parchment:hover {
     background: linear-gradient(180deg, #FFFFFF 0%, #EBD5AB 100%);
     border-color: #E5C995;
     box-shadow: 
-      0 5px 10px rgba(24, 15, 10, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      0 6px 12px rgba(24, 15, 10, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.98);
   }
   .skeuo-button-parchment:active {
-    transform: translateY(1px);
+    transform: translateY(1.5px);
     background: linear-gradient(180deg, #DDC69A 0%, #EBD5AB 100%);
     box-shadow: 
-      inset 0 2px 5px rgba(36, 23, 15, 0.5),
-      0 1px 0 rgba(229, 201, 149, 0.4);
-  }
-
-  /* Tactile Forest Green Hardware Switch */
-  .skeuo-button-forest {
-    background: linear-gradient(180deg, #1F523D 0%, #133326 100%);
-    border: 1.5px solid #B58A4C;
-    border-radius: 8px;
-    color: #F0DDB8;
-    font-weight: 700;
-    box-shadow: 
-      0 4px 8px rgba(18, 11, 7, 0.45),
-      0 1px 2px rgba(18, 11, 7, 0.3),
-      inset 0 1px 0 rgba(229, 201, 149, 0.4);
-    transition: all 0.1s ease-in-out;
-  }
-  .skeuo-button-forest:hover {
-    background: linear-gradient(180deg, #27654C 0%, #173D2D 100%);
-    border-color: #E5C995;
-    box-shadow: 
-      0 5px 12px rgba(23, 61, 45, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  }
-  .skeuo-button-forest:active {
-    transform: translateY(1px);
-    background: linear-gradient(180deg, #102B20 0%, #1A4433 100%);
-    box-shadow: 
-      inset 0 2px 6px rgba(0, 0, 0, 0.65),
-      0 1px 0 rgba(229, 201, 149, 0.2);
+      inset 0 2px 6px rgba(48, 32, 19, 0.55),
+      0 1px 0 rgba(229, 201, 149, 0.5);
   }
 
   /* Tactile Walnut Wood Button */
   .skeuo-button-wood {
-    background: linear-gradient(180deg, #4A3321 0%, #2E1F14 100%);
+    background: 
+      url('/textures/walnut-wood.svg'),
+      linear-gradient(180deg, #4A3321 0%, #2E1F14 100%);
+    background-blend-mode: overlay, normal;
     border: 1.5px solid #B58A4C;
     border-radius: 8px;
     color: #F0DDB8;
     font-weight: 700;
     box-shadow: 
-      0 4px 8px rgba(18, 11, 7, 0.45),
-      inset 0 1px 0 rgba(229, 201, 149, 0.3);
+      0 4px 8px rgba(16, 10, 6, 0.45),
+      inset 0 1px 0 rgba(229, 201, 149, 0.35);
     transition: all 0.1s ease-in-out;
   }
   .skeuo-button-wood:hover {
-    background: linear-gradient(180deg, #5C3F29 0%, #3B281A 100%);
+    background: 
+      url('/textures/walnut-wood.svg'),
+      linear-gradient(180deg, #5C3F29 0%, #3B281A 100%);
+    background-blend-mode: overlay, normal;
     border-color: #E5C995;
   }
   .skeuo-button-wood:active {
-    transform: translateY(1px);
-    background: linear-gradient(180deg, #24170F 0%, #3B281A 100%);
+    transform: translateY(1.5px);
+    background: 
+      url('/textures/walnut-wood.svg'),
+      linear-gradient(180deg, #24170F 0%, #3B281A 100%);
+    background-blend-mode: overlay, normal;
     box-shadow: 
-      inset 0 2px 5px rgba(0, 0, 0, 0.65),
+      inset 0 2px 5px rgba(0, 0, 0, 0.7),
       0 1px 0 rgba(229, 201, 149, 0.2);
+  }
+
+  /* Tactile Danger Button */
+  .skeuo-button-danger {
+    background: linear-gradient(180deg, #C43E32 0%, #8C2318 100%);
+    border: 1.5px solid #631710;
+    border-radius: 8px;
+    color: #FFF5F5;
+    font-weight: 700;
+    box-shadow: 
+      0 4px 8px rgba(16, 10, 6, 0.45),
+      inset 0 1px 0 rgba(255, 180, 180, 0.4),
+      inset 0 -1px 0 rgba(60, 15, 10, 0.7);
+    transition: all 0.1s ease-in-out;
+  }
+  .skeuo-button-danger:hover {
+    background: linear-gradient(180deg, #D44E41 0%, #A02B20 100%);
+    box-shadow: 0 6px 12px rgba(140, 35, 24, 0.55), inset 0 1px 0 rgba(255, 200, 200, 0.5);
+  }
+  .skeuo-button-danger:active {
+    transform: translateY(1.5px);
+    background: linear-gradient(180deg, #701B12 0%, #90241A 100%);
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(229, 201, 149, 0.2);
   }
 
   /* 3D Glossy Jelly Status Pill */
@@ -163,29 +330,42 @@ body {
     box-shadow: 
       0 2px 5px rgba(24, 15, 10, 0.35),
       0 1px 2px rgba(24, 15, 10, 0.2),
-      inset 0 1px 1px rgba(255, 255, 255, 0.65),
-      inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+      inset 0 1px 1px rgba(255, 255, 255, 0.75),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.45);
   }
 
-  /* Dark Recessed Oscilloscope / Evidence Screen */
-  .skeuo-screen {
-    background-color: #101C16;
+  /* Tactile Parchment Text Input */
+  .skeuo-input {
+    background-color: #D8B98A;
     background-image: 
-      radial-gradient(circle at 50% 25%, #182C22 0%, #0D1712 100%),
-      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.4) 2px, rgba(0, 0, 0, 0.4) 4px);
-    border: 2px solid #3B281A;
-    border-radius: 10px;
+      url('/textures/aged-parchment.svg'),
+      linear-gradient(180deg, rgba(36, 23, 15, 0.08) 0%, rgba(36, 23, 15, 0.02) 100%);
+    border: 1.5px solid #B58A4C;
+    border-radius: 8px;
+    color: #302013;
+    font-weight: 600;
     box-shadow: 
-      inset 0 4px 14px rgba(0, 0, 0, 0.9),
-      inset 0 0 0 1px rgba(40, 115, 74, 0.35),
-      0 1px 0 rgba(229, 201, 149, 0.4);
+      inset 0 2px 4px rgba(36, 23, 15, 0.28),
+      0 1px 0 rgba(229, 201, 149, 0.5);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .skeuo-input:focus {
+    outline: none;
+    border-color: #173D2D;
+    box-shadow: 
+      inset 0 2px 4px rgba(36, 23, 15, 0.25),
+      0 0 0 2px rgba(181, 138, 76, 0.4),
+      0 1px 0 rgba(229, 201, 149, 0.7);
+  }
+  .skeuo-input::placeholder {
+    color: #8A6D50;
   }
 }
 
 /* Custom warm brass & wood scrollbar */
 ::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -196,8 +376,8 @@ body {
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #B58A4C 0%, #7A5B2E 100%);
   border-radius: 9999px;
-  border: 1px solid #3B281A;
-  box-shadow: inset 0 1px 0 rgba(229, 201, 149, 0.5);
+  border: 1.5px solid #3B281A;
+  box-shadow: inset 0 1px 0 rgba(229, 201, 149, 0.6);
 }
 
 ::-webkit-scrollbar-thumb:hover {

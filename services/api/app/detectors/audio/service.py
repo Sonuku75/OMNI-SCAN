@@ -5,6 +5,7 @@ import aiofiles
 
 from app.core.logging import logger
 from app.detectors.base import DetectorOutput
+from app.detectors.evidence_synthesizer import EvidenceSynthesizer
 from app.detectors.audio.detector import AudioForensicsDetector
 from app.detectors.audio.model_adapter import PretrainedAudioModelAdapter
 from app.provenance.service import ProvenanceVerifier
@@ -58,10 +59,36 @@ class AudioAnalysisService:
             aud_mime = "audio/wav" if original_filename.lower().endswith(".wav") else "audio/mpeg"
             provenance_check = ProvenanceVerifier.verify(audio_bytes, original_filename, aud_mime)
 
-            # 4. Formulate evidence-grounded summary and assessment
-            assessment_label, assessment_score, score_semantics, summary = (
-                self._synthesize_assessment(forensics_output, model_output, original_filename)
+            # 4. Synthesize evidence, structured explanation, and grounded verdict
+            synth_res = EvidenceSynthesizer.synthesize_audio_analysis(
+                forensics_output=forensics_output,
+                model_output=model_output,
+                provenance_data=provenance_check,
+                filename=original_filename,
             )
+
+            verdict = synth_res["verdict"]
+            verdict_status = synth_res["verdict_status"]
+            explanation = synth_res["explanation"]
+            evidence_records = synth_res["evidence_records"]
+            supporting_evidence = synth_res["supporting_evidence"]
+            conflicting_evidence = synth_res["conflicting_evidence"]
+            neutral_evidence = synth_res["neutral_evidence"]
+            unavailable_evidence = synth_res["unavailable_evidence"]
+
+            # Backward-compatible assessment_label mapping
+            if verdict == "LIKELY AI-GENERATED":
+                assessment_label = "suspicious"
+            elif verdict == "LIKELY REAL":
+                assessment_label = "no_strong_indicators"
+            elif verdict == "LIKELY MANIPULATED":
+                assessment_label = "suspicious"
+            else:
+                assessment_label = "inconclusive"
+
+            assessment_score = model_output.score if (model_output.status == DetectorStatus.COMPLETED and model_output.score is not None) else forensics_output.score
+            score_semantics = "calibrated_probability" if (model_output.status == DetectorStatus.COMPLETED and model_output.score is not None) else "anomaly_index"
+            summary = explanation["summary"]
 
             # Calculate duration in ms if available
             duration_ms = None
@@ -69,7 +96,34 @@ class AudioAnalysisService:
                 dur_sec = forensics_output.signals.get("duration_seconds", 0.0)
                 duration_ms = int(dur_sec * 1000)
 
+            # Extract structured blocks
+            model_inference_data = (
+                model_output.signals.get("model_inference")
+                if model_output.status == DetectorStatus.COMPLETED
+                else None
+            )
+            forensic_heuristics_data = {
+                "detector_name": forensics_output.detector_name,
+                "score": forensics_output.score,
+                "score_semantics": forensics_output.score_semantics,
+                "signals": forensics_output.signals,
+            }
+            metadata_and_provenance_data = {
+                "provenance_check": provenance_check,
+                "container_format": forensics_output.signals.get("container", "WAV"),
+                "sample_rate_hz": forensics_output.signals.get("sample_rate_hz"),
+            }
+            all_limitations = list(set(forensics_output.limitations + model_output.limitations))
+
             return {
+                "verdict": verdict,
+                "verdict_status": verdict_status,
+                "explanation": explanation,
+                "evidence_records": evidence_records,
+                "supporting_evidence": supporting_evidence,
+                "conflicting_evidence": conflicting_evidence,
+                "neutral_evidence": neutral_evidence,
+                "unavailable_evidence": unavailable_evidence,
                 "assessment_label": assessment_label,
                 "assessment_score": assessment_score,
                 "score_semantics": score_semantics,
@@ -77,6 +131,12 @@ class AudioAnalysisService:
                 "duration_ms": duration_ms,
                 "detector_results": [forensics_output, model_output],
                 "provenance": provenance_check,
+                "model_inference": model_inference_data,
+                "forensic_heuristics": forensic_heuristics_data,
+                "metadata_and_provenance": metadata_and_provenance_data,
+                "model_version": model_output.detector_version,
+                "calibration_status": model_output.signals.get("calibration_status", "unconfigured"),
+                "limitations": all_limitations,
                 "human_review_recommended": bool(assessment_label in ("suspicious", "inconclusive")),
             }
 

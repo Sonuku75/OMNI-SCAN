@@ -24,8 +24,10 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Python build
+/lib/
+/lib64/
+!apps/web/lib/
 parts/
 sdist/
 var/
@@ -65,3 +67,20 @@ tmp/
 *.db-*
 *.sqlite
 *.sqlite3
+
+# Model Checkpoints, Weights & Training Datasets
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.bin
+*.h5
+weights/
+**/weights/*
+services/api/weights/*
+!services/api/weights/.gitkeep
+training/data/
+**/training/data/*
+training/checkpoints/
+**/training/checkpoints/*
+*.pkl
